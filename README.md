@@ -1,6 +1,6 @@
 # bthreads
 
-`worker_threads` wrapper for node.js. Provides transparent backends for
+`worker_threads` wrapper for node.js. Provides transparent fallback for
 pre-v12.0.0 node.js (via `child_process`) as well as browser web workers.
 
 ## Usage
