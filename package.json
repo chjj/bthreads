@@ -14,7 +14,7 @@
     "url": "https://github.com/bcoin-org/bthreads/issues"
   },
   "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
-  "main": "./lib/bthreads.js",
+  "main": "./lib/bthreads",
   "scripts": {
     "lint": "eslint lib/ || exit 0",
     "test": "bmocha --reporter spec test/*-test.js"
