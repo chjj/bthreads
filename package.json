@@ -1,0 +1,29 @@
+{
+  "name": "bthreads",
+  "version": "0.0.0",
+  "private": true,
+  "description": "worker_threads wrapper for node.js",
+  "keywords": [
+    "workers",
+    "worker_threads"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bthreads.git",
+  "homepage": "https://github.com/bcoin-org/bthreads",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bthreads/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bthreads.js",
+  "scripts": {
+    "lint": "eslint lib/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "devDependencies": {
+    "bmocha": "^0.1.8"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": "./lib/bthreads-browser.js"
+}

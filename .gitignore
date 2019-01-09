@@ -1,0 +1,5 @@
+build/
+node_modules/
+test/data/
+npm-debug.log
+package-lock.json
