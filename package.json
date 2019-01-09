@@ -19,6 +19,9 @@
     "lint": "eslint lib/ || exit 0",
     "test": "bmocha --reporter spec test/*-test.js"
   },
+  "dependencies": {
+    "bufio": "~1.0.3"
+  },
   "devDependencies": {
     "bmocha": "^0.1.8"
   },
