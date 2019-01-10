@@ -53,12 +53,15 @@ Caveats for the browser backend:
   from it. When using a bundler, note that the bundler will _not_ be able to
   compile the eval'd code. This means that `import` and `require` will not be
   available.
+- Furthermore, `options.eval` requires that `blob:` and `data:` be set for the
+  [worker-src] [Content-Security-Policy]. See [content-security-policy.com] for
+  a guide.
 
-Finally, caveats for the `worker_threads` backend.
+Finally, caveats for the `worker_threads` backend:
 
 - It is remarkably unstable and crashes a lot with assertion failures,
   particularly when there is an uncaught exception or the thread is forcefully
-  terminated. Note that `worker_threads` is still unstable in node.js!
+  terminated. Note that `worker_threads` is still experimental in node.js!
 - Native modules will be unusable if they are not built as context-aware
   addons.
 
@@ -99,3 +102,7 @@ all code is your original work. `</legalese>`
 - Copyright (c) 2019, Christopher Jeffrey (MIT License).
 
 See LICENSE for more info.
+
+[worker-src]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src
+[Content-Security-Policy]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+[content-security-policy.com]: https://content-security-policy.com/
