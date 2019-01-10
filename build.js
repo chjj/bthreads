@@ -22,5 +22,5 @@ const output = resolve(__dirname, 'lib/browser/bundle.json');
     ]
   });
 
-  fs.writeFileSync(output, JSON.stringify(code) + '\n');
+  fs.writeFileSync(output, JSON.stringify(code.trim()) + '\n');
 })();
