@@ -43,19 +43,18 @@ Some caveats for the `child_process` backend:
   be transferred.
 - `options.workerData` probably has a limited size depending on platform (the
   maximum size of an environment variable).
-- SharedArrayBuffer does not work, and will throw an error if sent.
+- `SharedArrayBuffer` does not work and will throw an error if sent.
 
 Caveats for the browser backend:
 
 - `options.workerData` possibly has a limited size depending on the browser
   (the maximum size of `options.name`).
-- `options.eval` will create an object URL if possible and execute a new worker
-  from it. When using a bundler, note that the bundler will _not_ be able to
-  compile the eval'd code. This means that `import` and `require` will not be
-  available.
-- Furthermore, `options.eval` requires that `blob:` and `data:` be set for the
-  [worker-src] [Content-Security-Policy]. See [content-security-policy.com] for
-  a guide.
+- `options.eval` will create a data URI and execute a new worker from it. When
+  using a bundler, note that the bundler will _not_ be able to compile the
+  eval'd code. This means that `require` will have limited usability
+  (restricted to only core browserify modules and `bthreads` itself).
+- Furthermore, `options.eval` requires that `data:` be set for the [worker-src]
+  [Content-Security-Policy]. See [content-security-policy.com] for a guide.
 
 Finally, caveats for the `worker_threads` backend:
 
@@ -91,6 +90,57 @@ const worker = new threads.Worker(threads.browser
                                 : file);
 ```
 
+## importScripts
+
+In the browser, bthreads exposes a more useful version of `importScripts`.
+
+``` js
+const threads = require('bthreads');
+const $ = threads.importScripts('https://unpkg.com/jquery/dist/jquery.js');
+```
+
+This should work for any bundle exposed as UMD or CommonJS. Note that
+`threads.importScripts` behaves more like `require` in that it caches modules
+by URL. The cache is accessible through `threads.importScripts.cache`.
+
+## High-level API
+
+The low-level node.js API is not very useful on its own. bthreads optionally
+provides an API similar to [bsock].
+
+Example (for brevity, the async wrapper is not included below):
+
+``` js
+const threads = require('bthreads');
+
+if (threads.isMainThread) {
+  const thread = threads.create(__filename);
+
+  (thread instanceof threads.Thread) === true;
+
+  thread.bind('event', (x, y) => {
+    console.log(x + y);
+  });
+
+  console.log(await thread.call('job', ['hello']));
+} else {
+  const {parent} = threads;
+
+  parent.hook('job', async (arg) => {
+    return arg + ' world';
+  });
+
+  parent.fire('event', ['foo', 'bar']);
+}
+```
+
+Output:
+
+``` js
+foobar
+hello world
+```
+
 ## Contribution and License Agreement
 
 If you contribute code to this project, you are implicitly allowing your code
@@ -106,3 +156,4 @@ See LICENSE for more info.
 [worker-src]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src
 [Content-Security-Policy]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 [content-security-policy.com]: https://content-security-policy.com/
+[bsock]: https://github.com/bcoin-org/bsock
