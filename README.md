@@ -114,9 +114,7 @@ Example (for brevity, the async wrapper is not included below):
 const threads = require('bthreads');
 
 if (threads.isMainThread) {
-  const thread = threads.create(__filename);
-
-  (thread instanceof threads.Thread) === true;
+  const thread = new threads.Thread(__filename);
 
   thread.bind('event', (x, y) => {
     console.log(x + y);
