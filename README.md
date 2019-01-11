@@ -139,6 +139,41 @@ foobar
 hello world
 ```
 
+## More about eval'd browser code
+
+Note that if you are eval'ing some code inside a script you plan to bundle with
+browserify or webpack, `require` may get unintentionally transformed or
+overridden. This generally happens when you are calling toString on a defined
+function.
+
+``` js
+const threads = require('bthreads');
+
+function myWorker() {
+  const threads = require('bthreads');
+
+  threads.parentPort.postMessage('foo');
+}
+
+const code = `(${myWorker})();`;
+const worker = new threads.Worker(code, { eval: true });
+```
+
+The solution is to access `global.require` instead of `require`.
+
+``` js
+const threads = require('bthreads');
+
+function myWorker() {
+  const threads = global.require('bthreads');
+
+  threads.parentPort.postMessage('foo');
+}
+
+const code = `(${myWorker})();`;
+const worker = new threads.Worker(code, { eval: true });
+```
+
 ## Contribution and License Agreement
 
 If you contribute code to this project, you are implicitly allowing your code
