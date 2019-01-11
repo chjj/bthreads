@@ -139,6 +139,41 @@ foobar
 hello world
 ```
 
+### Creating a thread pool
+
+You may find yourself wanting to parallelize the same worker jobs. The
+high-level API offers a thread pool object (`threads.Pool`) which will
+automatically load balance and scale to the number of CPU cores.
+
+``` js
+if (threads.isMainThread) {
+  const pool = new threads.Pool(threads.source);
+
+  const results = await Promise.all([
+    pool.call('job1'), // Runs on thread 1.
+    pool.call('job2'), // Runs on thread 2.
+    pool.call('job3')  // Runs on thread 1.
+  ]);
+
+  console.log(results);
+} else {
+  Buffer.poolSize = 1; // Make buffers easily transferrable.
+
+  pool.hook('job1', async () => {
+    const buf = Buffer.from('job1 result');
+    return [buf, [buf.buffer]]; // Transfer the array buffer.
+  });
+
+  pool.hook('job2', async () => {
+    return 'job2 result';
+  });
+
+  pool.hook('job3', async () => {
+    return 'job3 result';
+  });
+}
+```
+
 ## More about eval'd browser code
 
 Note that if you are eval'ing some code inside a script you plan to bundle with
