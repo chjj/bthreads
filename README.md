@@ -1,6 +1,6 @@
 # bthreads
 
-`worker_threads` wrapper for node.js. Provides transparent fallback for
+A [worker_threads] wrapper for node.js. Provides transparent fallback for
 pre-v12.0.0 node.js (via `child_process`) as well as browser web workers.
 Browserifiable, webpack-able.
 
@@ -225,6 +225,7 @@ all code is your original work. `</legalese>`
 
 See LICENSE for more info.
 
+[worker_threads]: https://nodejs.org/api/worker_threads.html
 [worker-src]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src
 [Content-Security-Policy]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 [content-security-policy.com]: https://content-security-policy.com/
