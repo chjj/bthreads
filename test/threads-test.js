@@ -442,7 +442,7 @@ describe('Threads', (ctx) => {
     return wait(thread, () => called, 1);
   });
 
-  it('should test pool (parallel)', async () => {
+  it('should test pool (serial)', async () => {
     const pool = new threads.Pool(vector(15));
 
     let called = false;
@@ -456,6 +456,33 @@ describe('Threads', (ctx) => {
       const data = await pool.call('job', [i]);
       assert.strictEqual(data.toString(), i + ' world');
     }
+
+    setTimeout(() => {
+      pool.terminate();
+    }, 1000);
+
+    return wait(pool, () => called, 1);
+  });
+
+  it('should test pool (parallel)', async () => {
+    const pool = new threads.Pool(vector(15));
+
+    let called = false;
+
+    pool.bind('event', (x, y) => {
+      assert.strictEqual(x + y, 'foobar');
+      called = true;
+    });
+
+    const jobs = [];
+
+    for (let i = 0; i < 10; i++)
+      jobs.push(pool.call('job', [i]));
+
+    const results = await Promise.all(jobs);
+
+    for (let i = 0; i < 10; i++)
+      assert.strictEqual(results[i].toString(), i + ' world');
 
     setTimeout(() => {
       pool.terminate();
