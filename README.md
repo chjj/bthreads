@@ -90,13 +90,17 @@ const worker = new threads.Worker(threads.browser
                                 : file);
 ```
 
+To make self-execution easier, bthreads also exposes a `threads.source`
+property which refers to the main module's filename in node.js and the current
+script URL in the browser.
+
 ## importScripts
 
 In the browser, bthreads exposes a more useful version of `importScripts`.
 
 ``` js
 const threads = require('bthreads');
-const $ = threads.importScripts('https://unpkg.com/jquery/dist/jquery.js');
+const _ = threads.importScripts('https://unpkg.com/underscore/underscore.js');
 ```
 
 This should work for any bundle exposed as UMD or CommonJS. Note that

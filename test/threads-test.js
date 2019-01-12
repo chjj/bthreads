@@ -51,8 +51,11 @@ function wait(thread, test, expect) {
   });
 }
 
-if (process.browser)
+if (process.browser) {
   register('/bundle.js', [__dirname, '../lib/browser/bundle.js']);
+  // 012.js calls 013.js. Must be registered here.
+  register('/test/cases/013.js', [__dirname, './cases/013.js']);
+}
 
 describe('Threads', (ctx) => {
   ctx.timeout(5000);
@@ -336,9 +339,9 @@ describe('Threads', (ctx) => {
   });
 
   it('should create nested worker to talk to', (cb) => {
-    if (process.browser)
-      cb.skip();
-
+    // NOTE: This was failing _silently_ earlier when
+    // 012.js couldn't find 013.js (because it wasn't
+    // registered). Investigate. Add errors tests.
     const worker = new threads.Worker(vector(12));
 
     let called = false;
@@ -401,7 +404,7 @@ describe('Threads', (ctx) => {
       }, 100);
     }
 
-    const code = `(${workerThread})();`;
+    const code = `(${workerThread}).call(this);`;
     const worker = new threads.Worker(code, {
       header: URL,
       eval: true
@@ -554,5 +557,35 @@ describe('Threads', (ctx) => {
     }
 
     return wait(thread, 0);
+  });
+
+  it('should import scripts', async (x) => {
+    if (!process.browser)
+      x.skip();
+
+    const thread = new threads.Thread(() => {
+      const assert = global.require('assert');
+      const threads = global.require('bthreads');
+
+      const _ = threads.importScripts(
+        'https://unpkg.com/underscore@1.9.1/underscore.js');
+
+      assert.strictEqual(_.VERSION, '1.9.1');
+
+      console.log(_.VERSION);
+
+      process.exit(0);
+    }, { header: URL, stdout: true });
+
+    let called = false;
+
+    // Test stdout while we're at it.
+    thread.stdout.setEncoding('utf8');
+    thread.stdout.on('data', (data) => {
+      assert.strictEqual(data.trim(), '1.9.1');
+      called = true;
+    });
+
+    return wait(thread, () => called, 0);
   });
 });
