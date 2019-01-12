@@ -1,6 +1,5 @@
-etc/bundle.js
 build/
 node_modules/
-test/data/
+bundle/index.js
 npm-debug.log
 package-lock.json

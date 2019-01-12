@@ -1,0 +1,19 @@
+{
+  "name": "bthreads-bundle",
+  "version": "0.0.0",
+  "private": true,
+  "description": "bthreads worker prelude",
+  "keywords": [
+    "threads",
+    "workers",
+    "worker_threads"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bthreads.git",
+  "homepage": "https://github.com/bcoin-org/bthreads",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bthreads/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./index.js"
+}

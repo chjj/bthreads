@@ -2,10 +2,12 @@
 
 'use strict';
 
+const resolve = require('path').resolve.bind(null, __dirname);
+
 require('bpkg')({
   env: 'browser',
-  input: 'lib/browser/bundle.js',
-  output: 'etc/bundle.js',
+  input: resolve('../lib/browser/bundle.js'),
+  output: resolve('./index.js'),
   plugins: [
     ['babylonia', {
       targets: 'last 2 chrome versions'
