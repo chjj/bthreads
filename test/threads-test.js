@@ -466,11 +466,9 @@ describe('Threads', (ctx) => {
       assert.strictEqual(data.toString(), i + ' world');
     }
 
-    setTimeout(() => {
-      pool.terminate();
-    }, 1000);
+    await pool.close();
 
-    return wait(pool, () => called, 1);
+    assert(called);
   });
 
   it('should test pool (parallel)', async () => {
@@ -493,11 +491,9 @@ describe('Threads', (ctx) => {
     for (let i = 0; i < 10; i++)
       assert.strictEqual(results[i].toString(), i + ' world');
 
-    setTimeout(() => {
-      pool.terminate();
-    }, 1000);
+    await pool.close();
 
-    return wait(pool, () => called, 1);
+    assert(called);
   });
 
   it('should transfer buffer to thread', async () => {
