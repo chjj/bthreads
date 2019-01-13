@@ -3,6 +3,9 @@
 
 'use strict';
 
+// Uncomment to test polyfill:
+// global.Worker = null;
+
 Buffer.poolSize = 1;
 
 const assert = require('assert');
@@ -563,7 +566,7 @@ describe('Threads', (ctx) => {
   });
 
   it('should import scripts', async (x) => {
-    if (!threads.browser || threads.backend === 'polyfill')
+    if (threads.backend !== 'web_workers')
       x.skip();
 
     const thread = new threads.Thread(() => {
@@ -590,5 +593,15 @@ describe('Threads', (ctx) => {
     });
 
     return wait(thread, () => called, 0);
+  });
+
+  it('should close child', (cb) => {
+    if (threads.browser)
+      cb.skip();
+
+    const worker = new threads.Worker(vector(16));
+
+    worker.on('error', cb);
+    worker.on('exit', onExit(cb));
   });
 });
