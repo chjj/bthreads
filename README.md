@@ -45,8 +45,7 @@ bthreads has 4 backends and a few layers of fallback:
 - `child_process` - Leverages the [child_process] module in node.js to emulate
   worker threads.
 - `web_workers` - [Web Workers API][web_workers] (browser only).
-- `polyfill` - A [polyfill] for the web workers API (note that usage of
-  `importScripts` will potentially freeze the UI if this backend is loaded).
+- `polyfill` - A [polyfill] for the web workers API.
 
 The current backend is exposed as `threads.backend`.
 
