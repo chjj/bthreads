@@ -501,15 +501,18 @@ describe('Threads', (ctx) => {
       const assert = global.require('assert');
       const {parent} = global.require('bthreads');
 
-      parent.hook('job', (data) => {
+      parent.hook('job', (data, transfer) => {
         assert(Buffer.isBuffer(data));
+        Buffer.poolSize = 1;
+        data = Buffer.from(data);
         setTimeout(() => process.exit(0), 100);
-        return [data, [data.buffer]];
+        transfer(data);
+        return data;
       });
     }, { header: URL });
 
     const data = Buffer.from('foo');
-    const result = await thread.call('job', [data], [data.buffer]);
+    const result = await thread.call('job', [data], [data]);
 
     if (threads.backend === 'web_workers'
         || threads.backend === 'worker_threads') {
