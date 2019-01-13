@@ -81,6 +81,9 @@ describe('Threads', (ctx) => {
       assert(threads.backend === 'web_workers'
           || threads.backend === 'polyfill');
     }
+
+    if (process.browser)
+      assert(threads.browser);
   });
 
   it('should create worker with data', (cb) => {
@@ -94,7 +97,7 @@ describe('Threads', (ctx) => {
       msg = Buffer.from(msg);
       assert.strictEqual(msg.toString(), 'foobar');
       called = true;
-      if (process.browser)
+      if (threads.browser)
         worker._terminate(0);
     });
 
@@ -121,7 +124,7 @@ describe('Threads', (ctx) => {
   });
 
   it('should not hang if there is no input', (cb) => {
-    if (process.browser)
+    if (threads.browser)
       cb.skip();
 
     const worker = new threads.Worker(vector(2), {
@@ -150,7 +153,7 @@ describe('Threads', (ctx) => {
     worker.stdout.on('data', (msg) => {
       assert.strictEqual(msg, 'foobar');
       called = true;
-      if (process.browser)
+      if (threads.browser)
         worker._terminate(0);
     });
 
@@ -170,7 +173,7 @@ describe('Threads', (ctx) => {
     worker.stderr.on('data', (msg) => {
       assert.strictEqual(msg, 'foobar');
       called = true;
-      if (process.browser)
+      if (threads.browser)
         worker._terminate(0);
     });
 
@@ -190,7 +193,7 @@ describe('Threads', (ctx) => {
     worker.stdout.on('data', (msg) => {
       assert.strictEqual(msg, 'foobar\n');
       called = true;
-      if (process.browser)
+      if (threads.browser)
         worker._terminate(0);
     });
 
@@ -210,7 +213,7 @@ describe('Threads', (ctx) => {
     worker.stderr.on('data', (msg) => {
       assert.strictEqual(msg, 'foobar\n');
       called = true;
-      if (process.browser)
+      if (threads.browser)
         worker._terminate(0);
     });
 
@@ -549,7 +552,7 @@ describe('Threads', (ctx) => {
 
     const result = await thread.call('job', [data]);
 
-    if (process.browser) {
+    if (threads.browser) {
       assert.strictEqual(result.now, data.now);
       assert.strictEqual(result.date.getTime(), date.getTime());
     } else {
@@ -560,7 +563,7 @@ describe('Threads', (ctx) => {
   });
 
   it('should import scripts', async (x) => {
-    if (!process.browser || threads.backend === 'polyfill')
+    if (!threads.browser || threads.backend === 'polyfill')
       x.skip();
 
     const thread = new threads.Thread(() => {
