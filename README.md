@@ -35,6 +35,21 @@ $ node threads.js
 foobar
 ```
 
+## Backends
+
+bthreads has 4 backends and a few layers of fallback:
+
+- `worker_threads` - Uses the still experimental [worker_threads] module in
+  node.js. Currently only usable if `--experimental-worker` is passed on the
+  command line.
+- `child_process` - Leverages the [child_process] module in node.js to emulate
+  worker threads.
+- `web_workers` - [Web Workers API][web_workers] (browser only).
+- `polyfill` - A [polyfill] for the web workers API (note that usage of
+  `importScripts` will potentially freeze the UI if this backend is loaded).
+
+The current backend is exposed as `threads.backend`.
+
 ## Caveats
 
 Some caveats for the `child_process` backend:
@@ -45,7 +60,7 @@ Some caveats for the `child_process` backend:
   maximum size of an environment variable).
 - `SharedArrayBuffer` does not work and will throw an error if sent.
 
-Caveats for the browser backend:
+Caveats for the `web_workers` backend:
 
 - `options.workerData` possibly has a limited size depending on the browser
   (the maximum size of `options.name`).
@@ -55,57 +70,25 @@ Caveats for the browser backend:
   (restricted to only core browserify modules and `bthreads` itself).
 - Furthermore, `options.eval` requires that `data:` be set for the [worker-src]
   [Content-Security-Policy]. See [content-security-policy.com] for a guide.
+- The `close` event for MessagePorts only has partial support (if a thread
+  suddenly terminates, `close` will not be emitted for any remote ports).
+  This is because the `close` event is not yet a part of the standard Web
+  Worker API. See https://github.com/whatwg/html/issues/1766 for more info.
+
+Caveats for the `polyfill` backend:
+
+- Code will not actually run in a separate context (obviously).
+- `importScripts` will perform a synchronous XMLHttpRequest and potentially
+  freeze the UI. Additionally, XHR is bound to certain cross-origin rules that
+  `importScripts` is not.
 
 Finally, caveats for the `worker_threads` backend:
 
-- It is remarkably unstable and crashes a lot with assertion failures,
+- It is somewhat unstable and crashes a lot with assertion failures,
   particularly when there is an uncaught exception or the thread is forcefully
   terminated. Note that `worker_threads` is still experimental in node.js!
 - Native modules will be unusable if they are not built as context-aware
   addons.
-
-## Writing code for node and the browser
-
-It's good to be aware of browserify and how it sets `__filename` and
-`__dirname`.
-
-For example:
-
-``` js
-const worker = new threads.Worker(`${__dirname}/worker.js`);
-```
-
-If your code resides in `/root/project/lib/main.js`, the browserify generated
-path will ultimately be `/lib/worker.js`. Meaning `/root/project/lib/worker.js`
-should exist for node and `http://[host]/lib/worker.js` should exist for the
-browser.
-
-The browser backend also exposes a `browser` flag for this situation.
-
-Example:
-
-``` js
-const worker = new threads.Worker(threads.browser
-                                ? 'http://.../' + path.basename(file)
-                                : file);
-```
-
-To make self-execution easier, bthreads also exposes a `threads.source`
-property which refers to the main module's filename in node.js and the current
-script URL in the browser.
-
-## importScripts
-
-In the browser, bthreads exposes a more useful version of `importScripts`.
-
-``` js
-const threads = require('bthreads');
-const _ = threads.importScripts('https://unpkg.com/underscore/underscore.js');
-```
-
-This should work for any bundle exposed as UMD or CommonJS. Note that
-`threads.importScripts` behaves more like `require` in that it caches modules
-by URL. The cache is accessible through `threads.importScripts.cache`.
 
 ## High-level API
 
@@ -178,6 +161,49 @@ if (threads.isMainThread) {
 }
 ```
 
+## Writing code for node and the browser
+
+It's good to be aware of browserify and how it sets `__filename` and
+`__dirname`.
+
+For example:
+
+``` js
+const worker = new threads.Worker(`${__dirname}/worker.js`);
+```
+
+If your code resides in `/root/project/lib/main.js`, the browserify generated
+path will ultimately be `/lib/worker.js`. Meaning `/root/project/lib/worker.js`
+should exist for node and `http://[host]/lib/worker.js` should exist for the
+browser.
+
+The browser backend also exposes a `browser` flag for this situation.
+
+Example:
+
+``` js
+const worker = new threads.Worker(threads.browser
+                                ? 'http://.../' + path.basename(file)
+                                : file);
+```
+
+To make self-execution easier, bthreads also exposes a `threads.source`
+property which refers to the main module's filename in node.js and the current
+script URL in the browser.
+
+## importScripts
+
+In the browser, bthreads exposes a more useful version of `importScripts`.
+
+``` js
+const threads = require('bthreads');
+const _ = threads.importScripts('https://unpkg.com/underscore/underscore.js');
+```
+
+This should work for any bundle exposed as UMD or CommonJS. Note that
+`threads.importScripts` behaves more like `require` in that it caches modules
+by URL. The cache is accessible through `threads.importScripts.cache`.
+
 ## More about eval'd browser code
 
 Note that if you are eval'ing some code inside a script you plan to bundle with
@@ -226,6 +252,9 @@ all code is your original work. `</legalese>`
 See LICENSE for more info.
 
 [worker_threads]: https://nodejs.org/api/worker_threads.html
+[child_process]: https://nodejs.org/api/child_process.html
+[web_workers]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
+[polyfill]: https://github.com/chjj/bthreads/blob/master/lib/browser/polyfill.js
 [worker-src]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src
 [Content-Security-Policy]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 [content-security-policy.com]: https://content-security-policy.com/
