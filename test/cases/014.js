@@ -3,18 +3,18 @@
 Buffer.poolSize = 1;
 
 const assert = require('assert');
-const {isMainThread, parentPort, backend} = require('bthreads');
+const threads = require('../../');
 
-assert(!isMainThread);
+assert(!threads.isMainThread);
 
-parentPort.on('message', (buf) => {
+threads.parentPort.on('message', (buf) => {
   assert(buf instanceof Uint8Array);
   assert(Buffer.from(buf).toString() === 'foobar');
 
-  parentPort.postMessage(buf, [buf.buffer]);
+  threads.parentPort.postMessage(buf, [buf.buffer]);
 
-  if (backend === 'web_workers'
-      || backend === 'worker_threads') {
+  if (threads.backend === 'web_workers'
+      || threads.backend === 'worker_threads') {
     assert(buf.length === 0);
   }
 

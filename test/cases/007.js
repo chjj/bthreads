@@ -1,10 +1,10 @@
 'use strict';
 
 const assert = require('assert');
-const {isMainThread, parentPort} = require('bthreads');
+const threads = require('../../');
 
-assert(!isMainThread);
+assert(!threads.isMainThread);
 
 setInterval(() => {}, 1000);
 
-parentPort.postMessage('kill me');
+threads.parentPort.postMessage('kill me');

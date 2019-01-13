@@ -1,8 +1,8 @@
 'use strict';
 
 const assert = require('assert');
-const {isMainThread, workerData} = require('bthreads');
+const threads = require('../../');
 
-assert(!isMainThread);
+assert(!threads.isMainThread);
 
-console.log(workerData + 'bar');
+console.log(threads.workerData + 'bar');

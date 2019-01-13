@@ -2,15 +2,15 @@
 
 const assert = require('assert');
 const {join} = require('path');
-const {Worker, isMainThread, parentPort, MessageChannel} = require('bthreads');
+const threads = require('../../');
 
-assert(!isMainThread);
+assert(!threads.isMainThread);
 
-const {port1, port2} = new MessageChannel();
+const {port1, port2} = new threads.MessageChannel();
 
-parentPort.postMessage(port2, [port2]);
+threads.parentPort.postMessage(port2, [port2]);
 
-const worker = new Worker(join(__dirname, '013.js'));
+const worker = new threads.Worker(join(__dirname, '013.js'));
 
 worker.postMessage(port1, [port1]);
 

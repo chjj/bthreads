@@ -1,8 +1,8 @@
 'use strict';
 
 const assert = require('assert');
-const {isMainThread, parentPort, workerData} = require('bthreads');
+const threads = require('../../');
 
-assert(!isMainThread);
+assert(!threads.isMainThread);
 
-parentPort.postMessage(Buffer.from(workerData + 'bar'));
+threads.parentPort.postMessage(Buffer.from(threads.workerData + 'bar'));

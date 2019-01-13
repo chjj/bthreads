@@ -1,12 +1,12 @@
 'use strict';
 
 const assert = require('assert');
-const {isMainThread, parentPort} = require('bthreads');
+const threads = require('../../');
 
-assert(!isMainThread);
+assert(!threads.isMainThread);
 
 // NOTE: worker_threads hangs even if we're not listening on stdin.
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (data) => {
-  parentPort.postMessage(data.trim() + 'bar');
+  threads.parentPort.postMessage(data.trim() + 'bar');
 });

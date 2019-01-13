@@ -1,13 +1,13 @@
 'use strict';
 
 const assert = require('assert');
-const {isMainThread, parentPort, MessageChannel} = require('bthreads');
+const threads = require('../../');
 
-assert(!isMainThread);
+assert(!threads.isMainThread);
 
-const {port1, port2} = new MessageChannel();
+const {port1, port2} = new threads.MessageChannel();
 
-parentPort.postMessage(port2, [port2]);
+threads.parentPort.postMessage(port2, [port2]);
 
 port1.on('message', (msg) => {
   assert.strictEqual(msg, 'hello world');
