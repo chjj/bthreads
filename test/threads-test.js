@@ -560,7 +560,7 @@ describe('Threads', (ctx) => {
   });
 
   it('should import scripts', async (x) => {
-    if (!process.browser)
+    if (!process.browser || threads.backend === 'polyfill')
       x.skip();
 
     const thread = new threads.Thread(() => {
