@@ -591,7 +591,7 @@ describe('Threads', (ctx) => {
     return wait(thread, () => called, 0);
   });
 
-  it('should send port to thread', async (x) => {
+  it('should send port to thread', async () => {
     const thread = new threads.Thread(() => {
       const {parent} = global.require('bthreads');
 
@@ -612,7 +612,7 @@ describe('Threads', (ctx) => {
     await thread.close();
   });
 
-  it('should send port to nested thread', async (x) => {
+  it('should send port to nested thread', async () => {
     // Double-evaled nested workers with ports
     // sent down two layers. How cool is that?
     const thread = new threads.Thread(() => {
@@ -645,7 +645,7 @@ describe('Threads', (ctx) => {
 
     const {port1, port2} = new threads.Channel();
 
-    await thread.call('spawn', [URL]); // need to pass the url
+    await thread.call('spawn', [URL]);
     await thread.call('port', [port1], [port1]);
 
     assert.strictEqual(await port2.call('job'), 'hello');
