@@ -144,7 +144,7 @@ if (threads.isMainThread) {
   const results = await Promise.all([
     pool.call('job1'), // Runs on thread 1.
     pool.call('job2'), // Runs on thread 2.
-    pool.call('job3')  // Runs on thread 1.
+    pool.call('job3')  // Runs on thread 3.
   ]);
 
   console.log(results);
