@@ -591,6 +591,71 @@ describe('Threads', (ctx) => {
     return wait(thread, () => called, 0);
   });
 
+  it('should send port to thread', async (x) => {
+    const thread = new threads.Thread(() => {
+      const {parent} = global.require('bthreads');
+
+      parent.hook('port', (port) => {
+        port.hook('job', () => {
+          return 'hello';
+        });
+      });
+    }, { header: URL });
+
+    const {port1, port2} = new threads.Channel();
+
+    await thread.call('port', [port1], [port1]);
+
+    assert.strictEqual(await port2.call('job'), 'hello');
+
+    await port2.close();
+    await thread.close();
+  });
+
+  it('should send port to nested thread', async (x) => {
+    // Double-evaled nested workers with ports
+    // sent down two layers. How cool is that?
+    const thread = new threads.Thread(() => {
+      const threads = global.require('bthreads');
+      const URL = threads.workerData;
+      const {parent} = threads;
+
+      let thread;
+
+      parent.hook('spawn', () => {
+        thread = new threads.Thread(() => {
+          const {parent} = global.require('bthreads');
+
+          parent.hook('port', (port) => {
+            port.hook('job', () => {
+              return 'hello';
+            });
+          });
+        }, { header: URL });
+      });
+
+      parent.hook('port', async (port) => {
+        await thread.call('port', [port], [port]);
+      });
+
+      parent.hook('close', async () => {
+        await thread.close();
+      });
+    }, { header: URL, workerData: URL });
+
+    const {port1, port2} = new threads.Channel();
+
+    await thread.call('spawn', [URL]); // need to pass the url
+    await thread.call('port', [port1], [port1]);
+
+    assert.strictEqual(await port2.call('job'), 'hello');
+
+    await thread.call('close');
+
+    await port2.close();
+    await thread.close();
+  });
+
   it('should close child', (cb) => {
     if (threads.browser)
       cb.skip();
