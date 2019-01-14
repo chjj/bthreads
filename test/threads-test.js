@@ -665,4 +665,26 @@ describe('Threads', (ctx) => {
     worker.on('error', cb);
     worker.on('exit', onExit(cb));
   });
+
+  it('should bind console without require', (cb) => {
+    if (threads.browser)
+      cb.skip();
+
+    const worker = new threads.Worker(vector(17), {
+      stdout: true
+    });
+
+    let called = false;
+
+    worker.stdout.setEncoding('utf8');
+    worker.stdout.on('data', (msg) => {
+      assert.strictEqual(msg, 'foobar\n');
+      called = true;
+      if (threads.browser)
+        worker._terminate(0);
+    });
+
+    worker.on('error', cb);
+    worker.on('exit', onExit(cb, () => called));
+  });
 });
