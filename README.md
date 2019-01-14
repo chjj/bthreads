@@ -254,9 +254,9 @@ const worker = new threads.Worker(code, { eval: true });
   - `threads.MessagePort` - See [worker_threads] documenation.
   - `threads.MessageChannel` - See [worker_threads] documenation.
   - `threads.Worker` - See [worker_threads] documenation.
+- Helpers
   - `threads.backend` - A string indicating the current backend
     (`worker_threads`, `child_process`, `web_workers`, or `polyfill`).
-- Helpers
   - `threads.source` - The current main module filename or script URL (`null`
     if in eval'd thread, worker only).
   - `threads.browser` - `true` if a browser backend is being used.
