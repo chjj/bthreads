@@ -58,6 +58,8 @@ Some caveats for the `child_process` backend:
 - `options.workerData` probably has a limited size depending on platform (the
   maximum size of an environment variable).
 - `SharedArrayBuffer` does not work and will throw an error if sent.
+- The object serializer does not yet support circular references. Any circular
+  reference will be replaced with `undefined` on the other side.
 
 Caveats for the `web_workers` backend:
 
@@ -80,6 +82,10 @@ Caveats for the `polyfill` backend:
 - `importScripts` will perform a synchronous XMLHttpRequest and potentially
   freeze the UI. Additionally, XHR is bound to certain cross-origin rules that
   `importScripts` is not.
+- Similarly, worker scripts are also spawned using XHR. The same cross-origin
+  limitations apply.
+- `Blob`, `File`, `FileList`, and `ImageBitmap` cannot be cloned due to
+  limitations of the DOM.
 
 Finally, caveats for the `worker_threads` backend:
 
