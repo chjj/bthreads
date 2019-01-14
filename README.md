@@ -290,7 +290,8 @@ const worker = new threads.Worker(code, { eval: true });
   - `Socket#send(msg, [transferList])` - Send message, will be emitted as a
     `message` event on the other side.
   - `Socket#fire(name, args, [transferList])` - Fire bind event.
-  - `Socket#call(name, args, [transferList])` (async) - Call remote hook.
+  - `Socket#call(name, args, [transferList], [timeout])` (async) - Call remote
+    hook.
   - `Socket#ref()` - Reference socket.
   - `Socket#unref()` - Clear socket reference.
 - Events
@@ -366,8 +367,8 @@ const worker = new threads.Worker(code, { eval: true });
   - `Pool#send(msg)` - Send message to all threads, will be emitted as a
     `message` event on the other side.
   - `Pool#fire(name, args)` - Fire bind event to first thread in queue.
-  - `Pool#call(name, args, [transferList])` (async) - Call remote hook on next
-    thread in queue.
+  - `Pool#call(name, args, [transferList], [timeout])` (async) - Call remote
+    hook on next thread in queue.
   - `Pool#ref()` - Reference pool.
   - `Pool#unref()` - Clear pool reference.
 - Events
