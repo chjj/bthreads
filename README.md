@@ -244,6 +244,152 @@ const code = `(${myWorker})();`;
 const worker = new threads.Worker(code, { eval: true });
 ```
 
+## API
+
+- Default API
+  - `threads.isMainThread` - See [worker_threads] documenation.
+  - `threads.parentPort` - See [worker_threads] documenation (worker only).
+  - `threads.threadId` - See [worker_threads] documenation.
+  - `threads.workerData` - See [worker_threads] documenation.
+  - `threads.MessagePort` - See [worker_threads] documenation.
+  - `threads.MessageChannel` - See [worker_threads] documenation.
+  - `threads.Worker` - See [worker_threads] documenation.
+  - `threads.backend` - A string indicating the current backend
+    (`worker_threads`, `child_process`, `web_workers`, or `polyfill`).
+- Helpers
+  - `threads.source` - The current main module filename or script URL (`null`
+    if in eval'd thread, worker only).
+  - `threads.browser` - `true` if a browser backend is being used.
+  - `threads.process` - Reference to the `child_process` backend. This is
+    present to explicitly use the `child_process` backend instead of the
+    `worker_threads` backend.
+  - `threads.exit(code)` - A reference to `process.exit` (worker only).
+  - `threads.stdin` - A reference to `process.stdin` (worker only).
+  - `threads.stdout` - A reference to `process.stdout` (worker only).
+  - `threads.stderr` - A reference to `process.stderr` (worker only).
+  - `threads.console` - A reference to `global.console` (worker only).
+- High-Level API
+  - `threads.Thread` - `Thread` Class (see below).
+  - `threads.Port` - `Port` Class (see below).
+  - `threads.Channel` - `Channel` Class (see below).
+  - `threads.Pool` - `Pool` Class (see below).
+  - `threads.parent` - A reference to the parent `Port` (worker only, see
+    below).
+
+### Socket Class (abstract, extends EventEmitter)
+
+- Constructor
+  - `new Socket()` - Not meant to be called directly.
+- Properties
+  - `Socket#events` (read only) - A reference to the bind `EventEmitter`.
+- Methods
+  - `Socket#bind(name, handler)` - Bind remote event.
+  - `Socket#unbind(name, handler)` - Unbind remote event.
+  - `Socket#hook(name, handler)` - Add hook handler.
+  - `Socket#unhook(name)` - Remove hook handler.
+  - `Socket#send(msg, [transferList])` - Send message, will be emitted as a
+    `message` event on the other side.
+  - `Socket#fire(name, args, [transferList])` - Fire bind event.
+  - `Socket#call(name, args, [transferList])` (async) - Call remote hook.
+  - `Socket#ref()` - Reference socket.
+  - `Socket#unref()` - Clear socket reference.
+- Events
+  - `Socket@message(msg)` - Emitted on message received.
+  - `Socket@error(err)` - Emitted on error.
+  - `Socket@event(event, args)` - Emitted on bind event.
+
+### Thread Class (extends Socket)
+
+- Constructor
+  - `new Thread(filename, [options])` - Instantiate thread with module.
+  - `new Thread(code, [options])` - Instantiate thread with code.
+  - `new Thread(function, [options])` - Instantiate thread with function.
+- Properties
+  - `Thread#stdin` (read only) - A writable stream representing stdin (only
+    present if `options.stdin` was passed).
+  - `Thread#stdout` (read only) - A readable stream representing stdout (only
+    present if `options.stdout` was passed).
+  - `Thread#stderr` (read only) - A readable stream representing stderr (only
+    present if `options.stderr` was passed).
+  - `Thread#threadId` (read only) - An integer representing the thread ID.
+- Methods
+  - `Thread#terminate([callback])` - Terminate the thread and optionally bind
+    to the `exit` event.
+  - `Thread#close()` (async) - Terminate the thread and wait for exit but also
+    listen for errors and reject the promise if any occur (in other words, a
+    better `async` version of `Thread#terminate`).
+- Events
+  `Thread@online()` - Emitted once thread is online.
+  `Thread@exit(code)` - Emitted on exit.
+
+### Port Class (extends Socket)
+
+- Constructor
+  - `new Port()` - Not meant to be called directly.
+- Methods
+  - `Port#start()` - Open and bind port (usually automatic).
+  - `Port#close()` - Close port.
+- Events
+  - `Port@close()` - Emitted on port close.
+
+### Channel Class
+
+- Constructor
+  - `new Channel()` - Instantiate channel.
+- Properties
+  - `Channel#port1` (read only) - A `Port` object.
+  - `Channel#port2` (read only) - A `Port` object.
+
+### Pool Class
+
+- Constructor
+  - `new Pool(filename, [options])` - Instantiate pool with module.
+  - `new Pool(code, [options])` - Instantiate pool with code.
+  - `new Pool(function, [options])` - Instantiate pool with function.
+- Properties
+  - `Pool#file` (read only) - A reference to the filename, function, or code
+    that was passed in.
+  - `Pool#options` (read only) - A reference to the options passed in.
+  - `Pool#size` (read only) - Number of threads to spawn.
+  - `Pool#events` (read only) - A reference to the bind `EventEmitter`.
+  - `Pool#threads` (read only) - A `Set` containing all spawned threads.
+- Methods
+  - `Pool#open()` (async) - Unclose the pool.
+  - `Pool#close()` (async) - Close all threads in pool, listen for errors.
+  - `Pool#next()` - Return the next thread in queue.
+  - `Pool#terminate(callback)` - Terminate all threads in pool, optionally
+    execute a callback once `exit` has been emitted for all threads.
+  - `Pool#bind(name, handler)` - Bind remote event for all threads.
+  - `Pool#unbind(name, handler)` - Unbind remote event for all threads.
+  - `Pool#hook(name, handler)` - Add hook handler for all threads.
+  - `Pool#unhook(name)` - Remove hook handler for all threads.
+  - `Pool#send(msg)` - Send message to all threads, will be emitted as a
+    `message` event on the other side.
+  - `Pool#fire(name, args)` - Fire bind event to first thread in queue.
+  - `Pool#call(name, args, [transferList])` (async) - Call remote hook on next
+    thread in queue.
+  - `Pool#ref()` - Reference pool.
+  - `Pool#unref()` - Clear pool reference.
+- Events
+  - `Pool@message(msg, thread)` - Emitted on message received.
+  - `Pool@error(err, thread)` - Emitted on error.
+  - `Pool@event(event, args, thread)` - Emitted on bind event.
+  - `Pool@spawn(thread)` - Emitted once thread is spawned.
+  - `Pool@online(thread)` - Emitted once thread is online.
+  - `Pool@exit(code, thread)` - Emitted on exit.
+  - `Pool@stdout(data, thread)` - Emitted on `stdout` data event.
+  - `Pool@stderr(data, thread)` - Emitted on `stderr` data event.
+
+### Thread, Pool, and Worker Options
+
+The `options` object accepted by the `Thread`, `Pool`, and `Worker` classes
+nearly identical to the [worker_threads] worker options with some differences:
+
+- `options.type` and `options.credentials` are valid options when using the
+  browser backend (see [web_workers]). Note that `options.type = 'module'` will
+  not work with the `polyfill` backend.
+- The `Pool` object accepts `size` and `encoding` options.
+
 ## Contribution and License Agreement
 
 If you contribute code to this project, you are implicitly allowing your code
