@@ -308,10 +308,8 @@ const worker = new threads.Worker(code, { eval: true });
 - Properties
   - `Thread#stdin` (read only) - A writable stream representing stdin (only
     present if `options.stdin` was passed).
-  - `Thread#stdout` (read only) - A readable stream representing stdout (only
-    present if `options.stdout` was passed).
-  - `Thread#stderr` (read only) - A readable stream representing stderr (only
-    present if `options.stderr` was passed).
+  - `Thread#stdout` (read only) - A readable stream representing stdout.
+  - `Thread#stderr` (read only) - A readable stream representing stderr.
   - `Thread#threadId` (read only) - An integer representing the thread ID.
 - Methods
   - `Thread#terminate([callback])` - Terminate the thread and optionally bind
