@@ -318,8 +318,8 @@ const worker = new threads.Worker(code, { eval: true });
     listen for errors and reject the promise if any occur (in other words, a
     better `async` version of `Thread#terminate`).
 - Events
-  `Thread@online()` - Emitted once thread is online.
-  `Thread@exit(code)` - Emitted on exit.
+  - `Thread@online()` - Emitted once thread is online.
+  - `Thread@exit(code)` - Emitted on exit.
 
 ### Port Class (extends Socket)
 
