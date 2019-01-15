@@ -617,7 +617,6 @@ describe('Threads', (ctx) => {
     // sent down two layers. How cool is that?
     const thread = new threads.Thread(() => {
       const threads = global.require('bthreads');
-      const URL = threads.workerData;
       const {parent} = threads;
 
       let thread;
@@ -631,7 +630,7 @@ describe('Threads', (ctx) => {
               return 'hello';
             });
           });
-        }, { header: URL });
+        });
       });
 
       parent.hook('port', async (port) => {
@@ -641,11 +640,11 @@ describe('Threads', (ctx) => {
       parent.hook('close', async () => {
         await thread.close();
       });
-    }, { header: URL, workerData: URL });
+    }, { header: URL });
 
     const {port1, port2} = new threads.Channel();
 
-    await thread.call('spawn', [URL]);
+    await thread.call('spawn');
     await thread.call('port', [port1], [port1]);
 
     assert.strictEqual(await port2.call('job'), 'hello');
@@ -686,5 +685,36 @@ describe('Threads', (ctx) => {
 
     worker.on('error', cb);
     worker.on('exit', onExit(cb, () => called));
+  });
+
+  it('should propagate stdout through multiple layers', (cb) => {
+    if (threads.browser)
+      cb.skip();
+
+    const thread = new threads.Thread(() => {
+      const threads = global.require('bthreads');
+
+      new threads.Thread(() => {
+        const threads = global.require('bthreads');
+
+        new threads.Thread(() => {
+          const threads = global.require('bthreads');
+
+          new threads.Thread(() => {
+            console.log('foobar');
+          });
+        });
+      });
+    }, { stdout: true });
+
+    let called = false;
+
+    thread.on('error', cb);
+    thread.on('exit', onExit(cb, () => called));
+
+    thread.stdout.on('data', (data) => {
+      assert.strictEqual(data.toString('utf8'), 'foobar\n');
+      called = true;
+    });
   });
 });
