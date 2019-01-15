@@ -355,7 +355,8 @@ const worker = new threads.Worker(code, { eval: true });
 - Methods
   - `Pool#open()` (async) - Unclose the pool.
   - `Pool#close()` (async) - Close all threads in pool, listen for errors.
-  - `Pool#next()` - Return the next thread in queue.
+  - `Pool#next()` - Return the next thread in queue (this may spawn a new
+    thread).
   - `Pool#terminate(callback)` - Terminate all threads in pool, optionally
     execute a callback once `exit` has been emitted for all threads.
   - `Pool#bind(name, handler)` - Bind remote event for all threads.
@@ -364,9 +365,9 @@ const worker = new threads.Worker(code, { eval: true });
   - `Pool#unhook(name)` - Remove hook handler for all threads.
   - `Pool#send(msg)` - Send message to all threads, will be emitted as a
     `message` event on the other side.
-  - `Pool#fire(name, args)` - Fire bind event to first thread in queue.
+  - `Pool#fire(name, args)` - Fire bind event to all threads.
   - `Pool#call(name, args, [transferList], [timeout])` (async) - Call remote
-    hook on next thread in queue.
+    hook on next thread in queue (this may spawn a new thread).
   - `Pool#ref()` - Reference pool.
   - `Pool#unref()` - Clear pool reference.
 - Events
@@ -375,9 +376,7 @@ const worker = new threads.Worker(code, { eval: true });
   - `Pool@event(event, args, thread)` - Emitted on bind event.
   - `Pool@spawn(thread)` - Emitted once thread is spawned.
   - `Pool@online(thread)` - Emitted once thread is online.
-  - `Pool@exit(code, thread)` - Emitted on exit.
-  - `Pool@stdout(data, thread)` - Emitted on `stdout` data event.
-  - `Pool@stderr(data, thread)` - Emitted on `stderr` data event.
+  - `Pool@exit(code, thread)` - Emitted on thread exit.
 
 ### Thread, Pool, and Worker Options
 
@@ -386,8 +385,16 @@ nearly identical to the [worker_threads] worker options with some differences:
 
 - `options.type` and `options.credentials` are valid options when using the
   browser backend (see [web_workers]). Note that `options.type = 'module'` will
-  not work with the `polyfill` backend.
-- The `Pool` object accepts `size` and `encoding` options.
+  not work with the `polyfill` backend. If a file extension is `.mjs`,
+  `options.type` is automatically set to `module` for consistency with node.js.
+- The browser backend requires a header or "prelude" file for eval'd code. This
+  is essentially a bundle which provides all the necessary browserify modules
+  (such that `require('path')` works, for example), as well as bthreads itself.
+  When using a browser backend `options.header` is a valid option. It should be
+  the URL to a [bundle]. By default, bthreads imports the [bthreads-bundle]
+  package from [unpkg.com].
+- The `Pool` class accepts `size` option. This allows you to manually set the
+  pool size instead of determining it by the number of CPU cores.
 
 ## Contribution and License Agreement
 
@@ -409,3 +416,6 @@ See LICENSE for more info.
 [Content-Security-Policy]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
 [content-security-policy.com]: https://content-security-policy.com/
 [bsock]: https://github.com/bcoin-org/bsock
+[bundle]: https://github.com/chjj/bthreads/blob/master/lib/browser/bundle.js
+[bthreads-bundle]: https://www.npmjs.com/package/bthreads-bundle
+[unpkg.com]: https://unpkg.com/
