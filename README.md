@@ -353,8 +353,9 @@ const worker = new threads.Worker(code, { eval: true });
   - `Pool#events` (read only) - A reference to the bind `EventEmitter`.
   - `Pool#threads` (read only) - A `Set` containing all spawned threads.
 - Methods
-  - `Pool#open()` (async) - Unclose the pool.
-  - `Pool#close()` (async) - Close all threads in pool, listen for errors.
+  - `Pool#open()` - Open and populate the pool with `this.size` threads
+    (otherwise threads will be lazily spawned).
+  - `Pool#close()` (async) - Close all threads in pool, reject on errors.
   - `Pool#next()` - Return the next thread in queue (this may spawn a new
     thread).
   - `Pool#terminate(callback)` - Terminate all threads in pool, optionally
@@ -364,8 +365,10 @@ const worker = new threads.Worker(code, { eval: true });
   - `Pool#hook(name, handler)` - Add hook handler for all threads.
   - `Pool#unhook(name)` - Remove hook handler for all threads.
   - `Pool#send(msg)` - Send message to all threads, will be emitted as a
-    `message` event on the other side.
-  - `Pool#fire(name, args)` - Fire bind event to all threads.
+    `message` event on the other side (this will populate the pool with threads
+    on the first call).
+  - `Pool#fire(name, args)` - Fire bind event to all threads (this will
+    populate the pool with threads on the first call).
   - `Pool#call(name, args, [transferList], [timeout])` (async) - Call remote
     hook on next thread in queue (this may spawn a new thread).
   - `Pool#ref()` - Reference pool.
@@ -374,7 +377,7 @@ const worker = new threads.Worker(code, { eval: true });
   - `Pool@message(msg, thread)` - Emitted on message received.
   - `Pool@error(err, thread)` - Emitted on error.
   - `Pool@event(event, args, thread)` - Emitted on bind event.
-  - `Pool@spawn(thread)` - Emitted once thread is spawned.
+  - `Pool@spawn(thread)` - Emitted immediately after thread is spawned.
   - `Pool@online(thread)` - Emitted once thread is online.
   - `Pool@exit(code, thread)` - Emitted on thread exit.
 
