@@ -87,6 +87,9 @@ describe('Threads', (ctx) => {
 
     if (process.browser)
       assert(threads.browser);
+
+    assert(typeof threads.source === 'string');
+    assert(threads.process);
   });
 
   it('should create worker with data', (cb) => {
