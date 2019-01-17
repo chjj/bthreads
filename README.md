@@ -250,7 +250,7 @@ const worker = new threads.Worker(code, { eval: true });
   - `threads.isMainThread` - See [worker_threads] documentation.
   - `threads.parentPort` - See [worker_threads] documentation (worker only).
   - `threads.threadId` - See [worker_threads] documentation.
-  - `threads.workerData` - See [worker_threads] documentation.
+  - `threads.workerData` - See [worker_threads] documentation (worker only).
   - `threads.MessagePort` - See [worker_threads] documentation.
   - `threads.MessageChannel` - See [worker_threads] documentation.
   - `threads.Worker` - See [worker_threads] documentation.
