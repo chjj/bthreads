@@ -260,7 +260,7 @@ const worker = new threads.Worker(code, { eval: true });
   - `threads.backend` - A string indicating the current backend
     (`worker_threads`, `child_process`, `web_workers`, or `polyfill`).
   - `threads.source` - The current main module filename or script URL (`null`
-    if in eval'd thread, worker only).
+    if in eval'd thread).
   - `threads.browser` - `true` if a browser backend is being used.
   - `threads.process` - Reference to the `child_process` backend. This is
     present to explicitly use the `child_process` backend instead of the
