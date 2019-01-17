@@ -254,8 +254,6 @@ const worker = new threads.Worker(code, { eval: true });
   - `threads.MessagePort` - See [worker_threads] documentation.
   - `threads.MessageChannel` - See [worker_threads] documentation.
   - `threads.Worker` - See [worker_threads] documentation.
-  - `threads.importScripts(url)` - `importScripts()` wrapper (browser+worker
-    only).
 - Helpers
   - `threads.backend` - A string indicating the current backend
     (`worker_threads`, `child_process`, `web_workers`, or `polyfill`).
@@ -270,6 +268,8 @@ const worker = new threads.Worker(code, { eval: true });
   - `threads.stdout` - A reference to `process.stdout` (worker only).
   - `threads.stderr` - A reference to `process.stderr` (worker only).
   - `threads.console` - A reference to `global.console` (worker only).
+  - `threads.importScripts(url)` - `importScripts()` wrapper (browser+worker
+    only).
 - High-Level API
   - `threads.Thread` - `Thread` Class (see below).
   - `threads.Port` - `Port` Class (see below).
