@@ -247,13 +247,15 @@ const worker = new threads.Worker(code, { eval: true });
 ## API
 
 - Default API
-  - `threads.isMainThread` - See [worker_threads] documenation.
-  - `threads.parentPort` - See [worker_threads] documenation (worker only).
-  - `threads.threadId` - See [worker_threads] documenation.
-  - `threads.workerData` - See [worker_threads] documenation.
-  - `threads.MessagePort` - See [worker_threads] documenation.
-  - `threads.MessageChannel` - See [worker_threads] documenation.
-  - `threads.Worker` - See [worker_threads] documenation.
+  - `threads.isMainThread` - See [worker_threads] documentation.
+  - `threads.parentPort` - See [worker_threads] documentation (worker only).
+  - `threads.threadId` - See [worker_threads] documentation.
+  - `threads.workerData` - See [worker_threads] documentation.
+  - `threads.MessagePort` - See [worker_threads] documentation.
+  - `threads.MessageChannel` - See [worker_threads] documentation.
+  - `threads.Worker` - See [worker_threads] documentation.
+  - `threads.importScripts(url)` - `importScripts()` wrapper (browser+worker
+    only).
 - Helpers
   - `threads.backend` - A string indicating the current backend
     (`worker_threads`, `child_process`, `web_workers`, or `polyfill`).
