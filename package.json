@@ -1,6 +1,6 @@
 {
   "name": "bthreads",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "worker threads for javascript",
   "keywords": [
     "threads",
@@ -20,10 +20,10 @@
     "test": "bmocha --reporter spec test/*-test.js"
   },
   "dependencies": {
-    "bufio": "~1.0.3"
+    "bufio": "~1.0.4"
   },
   "devDependencies": {
-    "bmocha": "^0.1.8"
+    "bmocha": "^1.0.0"
   },
   "engines": {
     "node": ">=8.0.0"
