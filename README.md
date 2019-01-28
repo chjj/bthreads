@@ -40,8 +40,8 @@ foobar
 bthreads has 4 backends and a few layers of fallback:
 
 - `worker_threads` - Uses the still experimental [worker_threads] module in
-  node.js. Currently only usable if `--experimental-worker` is passed on the
-  command line.
+  node.js. Only usable prior to node.js v11.7.0 if `--experimental-worker` is
+  passed on the command line.
 - `child_process` - Leverages the [child_process] module in node.js to emulate
   worker threads.
 - `web_workers` - [Web Workers API][web_workers] (browser only).
