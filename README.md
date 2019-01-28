@@ -47,7 +47,8 @@ bthreads has 4 backends and a few layers of fallback:
 - `web_workers` - [Web Workers API][web_workers] (browser only).
 - `polyfill` - A [polyfill] for the web workers API.
 
-The current backend is exposed as `threads.backend`.
+The current backend is exposed as `threads.backend`. Note that the current
+backend can be set with the `BTHREADS_BACKEND` environment variable.
 
 ## Caveats
 
