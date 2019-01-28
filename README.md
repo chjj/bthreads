@@ -206,7 +206,7 @@ const threads = require('bthreads');
 const _ = threads.importScripts('https://unpkg.com/underscore/underscore.js');
 ```
 
-This should work for any bundle exposed as UMD or CommonJS. Note that
+This should work for any library exposed as UMD or CommonJS. Note that
 `threads.importScripts` behaves more like `require` in that it caches modules
 by URL. The cache is accessible through `threads.importScripts.cache`.
 
