@@ -17,7 +17,7 @@
   "main": "./lib/bthreads",
   "scripts": {
     "lint": "eslint bench/ lib/ test/ || exit 0",
-    "test": "bmocha --reporter spec test/*-test.js"
+    "test": "BTHREADS_BACKEND=polyfill bmocha -H && bmocha -H && BTHREADS_BACKEND=child_process bmocha && bmocha"
   },
   "dependencies": {
     "bufio": "~1.0.4"
