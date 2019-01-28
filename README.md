@@ -342,7 +342,7 @@ const worker = new threads.Worker(code, { eval: true });
   - `Channel#port1` (read only) - A `Port` object.
   - `Channel#port2` (read only) - A `Port` object.
 
-### Pool Class
+### Pool Class (extends EventEmitter)
 
 - Constructor
   - `new Pool(filename, [options])` - Instantiate pool with module.
