@@ -4,7 +4,7 @@
 'use strict';
 
 // Uncomment to test polyfill:
-// global.Worker = null;
+// process.env.BTHREADS_BACKEND = 'polyfill';
 
 Buffer.poolSize = 1;
 
@@ -77,17 +77,25 @@ describe('Threads', (ctx) => {
   });
 
   it('should have correct environment', () => {
-    const execArgv = process.execArgv || [];
+    const argv = process.execArgv || [];
+    const experimental = argv.includes('--experimental-worker');
+    const backend = process.env.BTHREADS_BACKEND;
+    const native = !backend
+      || backend === 'web_workers'
+      || backend === 'worker_threads';
 
     assert(threads.isMainThread);
 
-    if (version >= 0x0b0700 || execArgv.includes('--experimental-worker')) {
-      assert.strictEqual(threads.backend, 'worker_threads');
-    } else if (!process.browser) {
-      assert.strictEqual(threads.backend, 'child_process');
+    if (process.browser) {
+      if (native && global.Worker)
+        assert.strictEqual(threads.backend, 'web_workers');
+      else
+        assert.strictEqual(threads.backend, 'polyfill');
     } else {
-      assert(threads.backend === 'web_workers'
-          || threads.backend === 'polyfill');
+      if (native && (version >= 0x0b0700 || experimental))
+        assert.strictEqual(threads.backend, 'worker_threads');
+      else
+        assert.strictEqual(threads.backend, 'child_process');
     }
 
     if (process.browser)
