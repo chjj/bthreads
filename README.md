@@ -295,6 +295,7 @@ const worker = new threads.Worker(code, { eval: true });
   - `Socket#fire(name, args, [transferList])` - Fire bind event.
   - `Socket#call(name, args, [transferList], [timeout])` (async) - Call remote
     hook.
+  - `Socket#hasRef()` - Test whether socket has reference.
   - `Socket#ref()` - Reference socket.
   - `Socket#unref()` - Clear socket reference.
 - Events
@@ -374,6 +375,7 @@ const worker = new threads.Worker(code, { eval: true });
     populate the pool with threads on the first call).
   - `Pool#call(name, args, [transferList], [timeout])` (async) - Call remote
     hook on next thread in queue (this may spawn a new thread).
+  - `Pool#hasRef()` - Test whether pool has reference.
   - `Pool#ref()` - Reference pool.
   - `Pool#unref()` - Clear pool reference.
 - Events
