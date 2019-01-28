@@ -3,9 +3,6 @@
 
 'use strict';
 
-// Uncomment to test polyfill:
-// process.env.BTHREADS_BACKEND = 'polyfill';
-
 Buffer.poolSize = 1;
 
 const assert = require('assert');
