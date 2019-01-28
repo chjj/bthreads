@@ -13,6 +13,11 @@ const {join} = require('path');
 const encoding = require('../lib/internal/encoding');
 const threads = require('../');
 const location = global.location || {};
+const parts = process.version.split(/[^\d]/);
+const version = (0
+  + (parts[1] & 0xff) * 0x10000
+  + (parts[2] & 0xff) * 0x00100
+  + (parts[3] & 0xff) * 0x00001);
 
 const PORT = (location.port >>> 0) || 80;
 const URL = `http://localhost:${PORT}/bundle.js`;
@@ -72,11 +77,11 @@ describe('Threads', (ctx) => {
   });
 
   it('should have correct environment', () => {
-    const {execArgv} = process;
+    const execArgv = process.execArgv || [];
 
     assert(threads.isMainThread);
 
-    if (execArgv && execArgv.includes('--experimental-worker')) {
+    if (version >= 0x0b0700 || execArgv.includes('--experimental-worker')) {
       assert.strictEqual(threads.backend, 'worker_threads');
     } else if (!process.browser) {
       assert.strictEqual(threads.backend, 'child_process');
