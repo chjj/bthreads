@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* global register */
+/* global register, BigInt */
 
 'use strict';
 
@@ -549,25 +549,81 @@ describe('Threads', (ctx) => {
     const data = {
       undefined_: undefined,
       null_: null,
+      true_: true,
+      false_: false,
       number: date.getTime(),
-      infinity: Infinity,
       nan: NaN,
+      infinity: Infinity,
+      ninfinity: -Infinity,
+      int8: -1,
+      uint8: 1,
       string: 'foobar',
-      date: date,
-      regex: /foobar/,
+      bigint: typeof BigInt === 'function' ? BigInt(-100) : undefined,
+      object: { foo: 'bar' },
       array: [1, 2],
       map: new Map([[1, 2]]),
       set: new Set([1, 2]),
+      regex: /foobar/,
+      date: date,
+      invalidDate: new Date('foo'),
+      arrayBuffer: Buffer.from('foobar').buffer,
       buffer: Buffer.from('foobar'),
-      floatArray: new Float32Array([1, 2])
+      int8Array: new Int8Array([-1, -2]),
+      uint8Array: new Uint8Array([1, 2]),
+      int16Array: new Int16Array([-1, -2]),
+      uint16Array: new Uint16Array([1, 2]),
+      int32Array: new Int32Array([-1, -2]),
+      uint32Array: new Uint32Array([1, 2]),
+      floatArray: new Float32Array([1, 2]),
+      doubleArray: new Float64Array([1, 2]),
+      circular: undefined
     };
+
+    data.circular = data;
 
     const result = await thread.call('job', [data]);
 
-    if (threads.browser) {
-      assert.strictEqual(result.now, data.now);
+    if (threads.browser || version < 0x0a0000) {
+      assert.strictEqual(result.undefined_, undefined);
+      assert.strictEqual(result.null_, null);
+      assert.strictEqual(result.true_, true);
+      assert.strictEqual(result.false_, false);
+      assert.strictEqual(result.number, date.getTime());
+      assert.strictEqual(result.nan !== result.nan, true);
+      assert.strictEqual(result.infinity, Infinity);
+      assert.strictEqual(result.ninfinity, -Infinity);
+      assert.strictEqual(result.int8, -1);
+      assert.strictEqual(result.uint8, 1);
+      assert.strictEqual(result.string, 'foobar');
+      if (typeof BigInt === 'function')
+        assert.strictEqual(result.bigint, BigInt(-100));
+      assert.strictEqual(result.object.foo, 'bar');
+      assert.strictEqual(result.array[0], 1);
+      assert.strictEqual(result.array[1], 2);
+      assert.strictEqual(result.map.get(1), 2);
+      assert.strictEqual(result.set.has(1), true);
+      assert.strictEqual(result.set.has(2), true);
+      assert.strictEqual(result.regex.source, 'foobar');
       assert.strictEqual(result.date.getTime(), date.getTime());
+      assert.strictEqual(result.invalidDate.toString(), 'Invalid Date');
+      assert.strictEqual(Buffer.from(result.arrayBuffer).toString('utf8'),
+                         'foobar');
+      assert.strictEqual(result.buffer.toString('utf8'), 'foobar');
+      assert.strictEqual(result.floatArray[0], 1);
+      assert.strictEqual(result.floatArray[1], 2);
+      if (threads.backend === 'child_process')
+        assert.strictEqual(result.circular, undefined);
+      else
+        assert.strictEqual(result.circular, result);
     } else {
+      assert.strictEqual(result.invalidDate.toString(), 'Invalid Date');
+
+      data.invalidDate = result.invalidDate;
+      data.uint8Array = Buffer.from([1, 2]);
+
+      if (threads.backend === 'child_process')
+        data.circular = undefined;
+
       assert.deepStrictEqual(result, data);
     }
 
