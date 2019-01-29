@@ -586,9 +586,11 @@ describe('Threads', (ctx) => {
       uint32Array: new Uint32Array([1, 2]),
       floatArray: new Float32Array([1, 2]),
       doubleArray: new Float64Array([1, 2]),
+      reference: undefined,
       circular: undefined
     };
 
+    data.reference = data.object;
     data.circular = data;
 
     const result = await thread.call('job', [data]);
@@ -621,12 +623,15 @@ describe('Threads', (ctx) => {
       assert.strictEqual(result.buffer.toString('utf8'), 'foobar');
       assert.strictEqual(result.floatArray[0], 1);
       assert.strictEqual(result.floatArray[1], 2);
+      assert.strictEqual(result.reference, result.object);
       assert.strictEqual(result.circular, result);
     } else {
-      assert.strictEqual(result.invalidDate.toString(), 'Invalid Date');
-
       data.invalidDate = result.invalidDate;
       data.uint8Array = Buffer.from([1, 2]);
+
+      assert.strictEqual(result.reference, result.object);
+      assert.strictEqual(result.circular, result);
+      assert.strictEqual(result.invalidDate.toString(), 'Invalid Date');
 
       assert.deepStrictEqual(result, data);
     }
