@@ -59,8 +59,6 @@ Some caveats for the `child_process` backend:
 - `options.workerData` probably has a limited size depending on platform (the
   maximum size of an environment variable).
 - `SharedArrayBuffer` does not work and will throw an error if sent.
-- The object serializer does not yet support circular references. Any circular
-  reference will be replaced with `undefined` on the other side.
 
 Caveats for the `web_workers` backend:
 

@@ -621,18 +621,12 @@ describe('Threads', (ctx) => {
       assert.strictEqual(result.buffer.toString('utf8'), 'foobar');
       assert.strictEqual(result.floatArray[0], 1);
       assert.strictEqual(result.floatArray[1], 2);
-      if (threads.backend === 'child_process')
-        assert.strictEqual(result.circular, undefined);
-      else
-        assert.strictEqual(result.circular, result);
+      assert.strictEqual(result.circular, result);
     } else {
       assert.strictEqual(result.invalidDate.toString(), 'Invalid Date');
 
       data.invalidDate = result.invalidDate;
       data.uint8Array = Buffer.from([1, 2]);
-
-      if (threads.backend === 'child_process')
-        data.circular = undefined;
 
       assert.deepStrictEqual(result, data);
     }
