@@ -565,6 +565,7 @@ describe('Threads', (ctx) => {
       nan: NaN,
       infinity: Infinity,
       ninfinity: -Infinity,
+      nzero: -0,
       int8: -1,
       uint8: 1,
       string: 'foobar',
@@ -604,6 +605,7 @@ describe('Threads', (ctx) => {
       assert.strictEqual(result.nan !== result.nan, true);
       assert.strictEqual(result.infinity, Infinity);
       assert.strictEqual(result.ninfinity, -Infinity);
+      assert.strictEqual(result.nzero, -0);
       assert.strictEqual(result.int8, -1);
       assert.strictEqual(result.uint8, 1);
       assert.strictEqual(result.string, 'foobar');
