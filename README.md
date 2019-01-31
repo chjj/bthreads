@@ -388,7 +388,7 @@ const worker = new threads.Worker(code, { eval: true });
 
 ### Thread, Pool, and Worker Options
 
-The `options` object accepted by the `Thread`, `Pool`, and `Worker` classes
+The `options` object accepted by the `Thread`, `Pool`, and `Worker` classes is
 nearly identical to the [worker_threads] worker options with some differences:
 
 - `options.type` and `options.credentials` are valid options when using the
