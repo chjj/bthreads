@@ -73,16 +73,6 @@ describe('Threads', (ctx) => {
     assert.deepStrictEqual(dec, arr);
   });
 
-  it('should encode and decode error', () => {
-    const err = new Error('test');
-    const enc = encoding.encode(err);
-    const dec = encoding.decode(enc);
-
-    assert.strictEqual(dec.name, err.name);
-    assert.strictEqual(dec.message, err.message);
-    assert.strictEqual(dec.stack, err.stack);
-  });
-
   it('should have correct environment', () => {
     const argv = process.execArgv || [];
     const experimental = argv.includes('--experimental-worker');
