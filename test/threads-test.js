@@ -596,6 +596,10 @@ describe('Threads', (ctx) => {
 
     const result = await thread.call('job', [data]);
 
+    assert(result && typeof result === 'object');
+    assert(result.__proto__ === Object.prototype);
+    assert(result !== data);
+
     if (threads.browser || version < 0x0a0000) {
       assert.strictEqual(result.undefined_, undefined);
       assert.strictEqual(result.null_, null);
@@ -611,10 +615,14 @@ describe('Threads', (ctx) => {
       assert.strictEqual(result.string, 'foobar');
       if (typeof BigInt === 'function')
         assert.strictEqual(result.bigint, BigInt(-100));
+      assert.strictEqual(result.object.__proto__, Object.prototype);
       assert.strictEqual(result.object.foo, 'bar');
+      assert.strictEqual(result.array.length, 2);
       assert.strictEqual(result.array[0], 1);
       assert.strictEqual(result.array[1], 2);
+      assert.strictEqual(result.map.size, 1);
       assert.strictEqual(result.map.get(1), 2);
+      assert.strictEqual(result.set.size, 2);
       assert.strictEqual(result.set.has(1), true);
       assert.strictEqual(result.set.has(2), true);
       assert.strictEqual(result.regex.source, 'foobar');
@@ -623,14 +631,37 @@ describe('Threads', (ctx) => {
       assert.strictEqual(Buffer.from(result.arrayBuffer).toString('utf8'),
                          'foobar');
       assert.strictEqual(result.buffer.toString('utf8'), 'foobar');
+      assert.strictEqual(result.int8Array.length, 2);
+      assert.strictEqual(result.int8Array[0], -1);
+      assert.strictEqual(result.int8Array[1], -2);
+      assert.strictEqual(result.uint8Array.length, 2);
+      assert.strictEqual(result.uint8Array[0], 1);
+      assert.strictEqual(result.uint8Array[1], 2);
+      assert.strictEqual(result.int16Array.length, 2);
+      assert.strictEqual(result.int16Array[0], -1);
+      assert.strictEqual(result.int16Array[1], -2);
+      assert.strictEqual(result.uint16Array.length, 2);
+      assert.strictEqual(result.uint16Array[0], 1);
+      assert.strictEqual(result.uint16Array[1], 2);
+      assert.strictEqual(result.int32Array.length, 2);
+      assert.strictEqual(result.int32Array[0], -1);
+      assert.strictEqual(result.int32Array[1], -2);
+      assert.strictEqual(result.uint32Array.length, 2);
+      assert.strictEqual(result.uint32Array[0], 1);
+      assert.strictEqual(result.uint32Array[1], 2);
+      assert.strictEqual(result.floatArray.length, 2);
       assert.strictEqual(result.floatArray[0], 1);
       assert.strictEqual(result.floatArray[1], 2);
+      assert.strictEqual(result.doubleArray.length, 2);
+      assert.strictEqual(result.doubleArray[0], 1);
+      assert.strictEqual(result.doubleArray[1], 2);
       assert.strictEqual(result.reference, result.object);
       assert.strictEqual(result.circular, result);
     } else {
       data.invalidDate = result.invalidDate;
       data.uint8Array = Buffer.from([1, 2]);
 
+      assert.strictEqual(result.object.__proto__, Object.prototype);
       assert.strictEqual(result.reference, result.object);
       assert.strictEqual(result.circular, result);
       assert.strictEqual(result.invalidDate.toString(), 'Invalid Date');
