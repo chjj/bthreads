@@ -75,8 +75,8 @@ Caveats for the `web_workers` backend:
   This is because the `close` event is not yet a part of the standard Web
   Worker API. See https://github.com/whatwg/html/issues/1766 for more info.
 - `SharedArrayBuffer` cannot be sent as `workerData`.
-- `Blob` and `File` may not be able to be cloned depending on your
-  `Content-Security-Policy` when sent as `workerData`.
+- `Blob` and `File` may not be able to be cloned when sent as `workerData`
+  depending on your `Content-Security-Policy`.
 - `FileList` will emerge on the other side as an `Array` rather than a
   `FileList` when sent as `workerData`.
 
@@ -89,10 +89,19 @@ Caveats for the `polyfill` backend:
 - Similarly, worker scripts are also spawned using XHR. The same cross-origin
   limitations apply.
 - `SharedArrayBuffer` cannot be sent as `workerData`.
-- `Blob` and `File` may not be able to be cloned depending on your
-  `Content-Security-Policy` when sent as `workerData`.
+- `Blob` and `File` may not be able to be cloned when sent as `workerData`
+  depending on your `Content-Security-Policy`.
 - `FileList` will emerge on the other side as an `Array` rather than a
   `FileList` when sent as `workerData`.
+- All transferred `ArrayBuffer`s behave as if they were `SharedArrayBuffer`s
+  (i.e. they're not neutered). Be careful!
+
+Caveats for all of the above:
+
+- For a number of reasons, bthreads has to walk the objects you pass in to
+  send. Note that the cloning function may get confused if you attempt to send
+  the raw prototype of a built-in object (for example
+  `worker.postMessage(Array.prototype)`).
 
 Finally, caveats for the `worker_threads` backend:
 
@@ -101,13 +110,6 @@ Finally, caveats for the `worker_threads` backend:
   terminated. Note that `worker_threads` is still experimental in node.js!
 - Native modules will be unusable if they are not built as context-aware
   addons.
-
-Caveats for all backends except for bare `worker_threads` usage:
-
-- For a number of reasons, bthreads has to walk the objects you pass in to
-  send. Note that the cloning function may get confused if you attempt to send
-  the raw prototype of a built-in object (for example
-  `worker.postMessage(Array.prototype)`).
 
 ## High-level API
 
