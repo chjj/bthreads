@@ -102,6 +102,19 @@ describe('Threads', (ctx) => {
     assert(threads.process);
   });
 
+  it('should create message channel', (cb) => {
+    const {port1, port2} = new threads.MessageChannel();
+
+    port2.on('message', (msg) => {
+      assert.deepStrictEqual(msg, { foo: 1 });
+      port1.close();
+      port2.close();
+      cb();
+    });
+
+    port1.postMessage({ foo: 1 });
+  });
+
   it('should create worker with data', (cb) => {
     const worker = new threads.Worker(vector(1), {
       workerData: 'foo'
