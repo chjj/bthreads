@@ -1,7 +1,7 @@
 # bthreads
 
 A [worker_threads] wrapper for node.js. Provides transparent fallback for
-pre-v11.7.0 node.js (via `child_process`) as well as browser web workers.
+pre-11.7.0 node.js (via `child_process`) as well as browser web workers.
 Browserifiable, webpack-able.
 
 ## Usage
@@ -26,7 +26,7 @@ if (threads.isMainThread) {
 }
 ```
 
-Output:
+Output (with node@<11.7.0):
 
 ``` bash
 $ node --experimental-worker threads.js
@@ -97,6 +97,10 @@ Caveats for the `polyfill` backend:
   (i.e. they're not neutered). Be careful!
 - Uncaught errors will not be caught and emitted as `error` events on worker
   objects.
+- The `console` object will not be linked to `process.{stdout,stderr}` when
+  inside a worker (note: this is fixable if browserify and webpack were to
+  slightly modify their `console` module). However, `threads.console` will work
+  normally.
 
 Caveats for all of the above:
 
