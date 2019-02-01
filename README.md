@@ -76,7 +76,7 @@ Caveats for the `web_workers` backend:
   Worker API. See https://github.com/whatwg/html/issues/1766 for more info.
 - `SharedArrayBuffer` cannot be sent as `workerData`.
 - `Blob` and `File` may not be able to be cloned depending on your
-  `Content-Security-Policy`.
+  `Content-Security-Policy` when sent as `workerData`.
 - `FileList` will emerge on the other side as an `Array` rather than a
   `FileList` when sent as `workerData`.
 
