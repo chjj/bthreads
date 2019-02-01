@@ -95,6 +95,8 @@ Caveats for the `polyfill` backend:
   `FileList` when sent as `workerData`.
 - All transferred `ArrayBuffer`s behave as if they were `SharedArrayBuffer`s
   (i.e. they're not neutered). Be careful!
+- Uncaught errors will not be caught and emitted as `error` events on worker
+  objects.
 
 Caveats for all of the above:
 

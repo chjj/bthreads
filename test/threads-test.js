@@ -818,4 +818,64 @@ describe('Threads', (ctx) => {
       called = true;
     });
   });
+
+  it('should throw error', async () => {
+    const thread = new threads.Thread(() => {
+      const threads = global.require('bthreads');
+
+      threads.parent.hook('job', () => {
+        throw new Error('foobar');
+      });
+    }, { header: URL });
+
+    await assert.rejects(thread.call('job'), /foobar/);
+    await thread.close();
+  });
+
+  it('should propagate exception', (cb) => {
+    if (threads.backend === 'polyfill')
+      cb.skip();
+
+    const thread = new threads.Thread(() => {
+      setImmediate(() => {
+        throw new Error('foobar');
+      });
+    }, { header: URL });
+
+    let called = false;
+
+    thread.on('error', (err) => {
+      assert(!called);
+      assert.strictEqual(err.message, 'foobar');
+      called = true;
+    });
+
+    thread.on('exit', onExit(cb, () => called, 1));
+  });
+
+  it('should propagate rejection', (cb) => {
+    if (threads.backend === 'polyfill')
+      cb.skip();
+
+    const thread = new threads.Thread(() => {
+      // Need this for `worker_threads` backend.
+      global.require('bthreads');
+
+      setImmediate(() => {
+        new Promise((resolve, reject) => {
+          reject(new Error('foobar'));
+        });
+      });
+    }, { header: URL });
+
+    let called = false;
+
+    thread.on('error', (err) => {
+      assert(!called);
+      assert.strictEqual(err.message, 'foobar');
+      called = true;
+    });
+
+    thread.on('exit', onExit(cb, () => called, 1));
+  });
 });
