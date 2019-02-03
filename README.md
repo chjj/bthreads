@@ -292,8 +292,7 @@ const worker = new threads.Worker(code, { eval: true });
   - `threads.console` - A reference to `global.console`.
   - `threads.importScripts(url)` - `importScripts()` wrapper (browser+worker
     only).
-  - `threads.cores` - Number of CPU cores available (this value will always be
-    `2` in the browser).
+  - `threads.cores` - Number of CPU cores available.
 - High-Level API
   - `threads.Thread` - `Thread` Class (see below).
   - `threads.Port` - `Port` Class (see below).
