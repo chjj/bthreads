@@ -841,7 +841,16 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       });
     }, { header: URL });
 
-    await assert.rejects(thread.call('job'), /foobar/);
+    if (!assert.rejects) {
+      try {
+        await thread.call('job');
+      } catch (e) {
+        assert(/foobar/.test(e.message));
+      }
+    } else {
+      await assert.rejects(thread.call('job'), /foobar/);
+    }
+
     await thread.close();
   });
 
