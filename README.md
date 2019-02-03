@@ -285,11 +285,11 @@ const worker = new threads.Worker(code, { eval: true });
   - `threads.process` - Reference to the `child_process` backend. This is
     present to explicitly use the `child_process` backend instead of the
     `worker_threads` backend.
-  - `threads.exit(code)` - A reference to `process.exit` (worker only).
-  - `threads.stdin` - A reference to `process.stdin` (worker only).
-  - `threads.stdout` - A reference to `process.stdout` (worker only).
-  - `threads.stderr` - A reference to `process.stderr` (worker only).
-  - `threads.console` - A reference to `global.console` (worker only).
+  - `threads.exit(code)` - A reference to `process.exit`.
+  - `threads.stdin` - A reference to `process.stdin`.
+  - `threads.stdout` - A reference to `process.stdout`.
+  - `threads.stderr` - A reference to `process.stderr`.
+  - `threads.console` - A reference to `global.console`.
   - `threads.importScripts(url)` - `importScripts()` wrapper (browser+worker
     only).
   - `threads.cores` - Number of CPU cores available (this value will always be
