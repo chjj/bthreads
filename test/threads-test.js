@@ -62,7 +62,7 @@ if (process.browser) {
   register('/test/cases/013.js', [__dirname, './cases/013.js']);
 }
 
-describe('Threads', (ctx) => {
+describe(`Threads (${threads.backend})`, (ctx) => {
   ctx.timeout(5000);
 
   it('should encode and decode', () => {
