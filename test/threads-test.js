@@ -916,7 +916,6 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         require.resolve('bthreads'),
         require.resolve('./threads-test.js')
       ]);
-      process.exit(0);
     }, { dirname: __dirname });
 
     let called = false;
