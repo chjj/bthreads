@@ -899,4 +899,39 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     thread.on('exit', onExit(cb, () => called, 1));
   });
+
+  it('should set module dirname', (cb) => {
+    if (threads.browser)
+      cb.skip();
+
+    const cwd = process.cwd();
+
+    process.chdir('/');
+
+    const thread = new threads.Thread(() => {
+      const {parent} = require('bthreads');
+      parent.send([
+        process.cwd(),
+        __dirname,
+        require.resolve('bthreads'),
+        require.resolve('./threads-test.js')
+      ]);
+      process.exit(0);
+    }, { dirname: __dirname });
+
+    let called = false;
+
+    thread.on('message', (msg) => {
+      assert(Array.isArray(msg));
+      assert.strictEqual(msg[0], '/');
+      assert.strictEqual(msg[1], __dirname);
+      assert.strictEqual(msg[2], require.resolve('bthreads'));
+      assert.strictEqual(msg[3], require.resolve('./threads-test.js'));
+      process.chdir(cwd);
+      called = true;
+    });
+
+    thread.on('error', cb);
+    thread.on('exit', onExit(cb, () => called, 0));
+  });
 });

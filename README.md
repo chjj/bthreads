@@ -425,6 +425,8 @@ nearly identical to the [worker_threads] worker options with some differences:
   package from [unpkg.com].
 - The `Pool` class accepts `size` option. This allows you to manually set the
   pool size instead of determining it by the number of CPU cores.
+- `options.dirname` allows you to set the `__dirname` of an eval'd module.
+  This makes `require` more predictable in eval'd modules (node only).
 
 ## Contribution and License Agreement
 
