@@ -422,7 +422,6 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       const threads = global.require('bthreads');
 
       assert(threads.parentPort);
-      assert(!global.require.main);
       assert.strictEqual(module.id, '[worker eval]');
       assert.strictEqual(path.basename(module.filename), '[worker eval]');
       assert.strictEqual(__dirname, '.');
