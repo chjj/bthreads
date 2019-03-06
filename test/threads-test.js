@@ -934,6 +934,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     thread.on('exit', onExit(cb, () => called, 0));
   });
 
+  // https://github.com/nodejs/node/issues/26463
   it('should not throw on unbind after close', () => {
     const {port1, port2} = new threads.Channel();
     const fn = () => {};
@@ -942,5 +943,34 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     port1.close(() => {
       port1.off('message', fn);
     });
+  });
+
+  // https://github.com/nodejs/node/issues/26463
+  it.skip('should not buffer after onmessage removal', (cb) => {
+    const {port1, port2} = new threads.Channel();
+    const text = [];
+
+    port1.send('hello');
+
+    setTimeout(() => {
+      port2.on('message', (data) => {
+        text.push(data);
+
+        port2.removeAllListeners('message');
+        port1.send('world');
+
+        setTimeout(() => {
+          port2.on('message', (data) => {
+            text.push(data);
+          });
+
+          setTimeout(() => {
+            port2.removeAllListeners('message');
+            assert.strictEqual(text.join(' '), 'hello');
+            cb();
+          }, 100);
+        }, 100);
+      });
+    }, 100);
   });
 });
