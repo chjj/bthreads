@@ -59,6 +59,8 @@ Some caveats for the `child_process` backend:
 - `options.workerData` probably has a limited size depending on platform (the
   maximum size of an environment variable).
 - `SharedArrayBuffer` does not work and will throw an error if sent.
+- In order to avoid memory leaks, MessagePorts (all aside from the parentPort)
+  do not hold event loop references (`ref()` and `unref()` are noops).
 
 Caveats for the `web_workers` backend:
 
