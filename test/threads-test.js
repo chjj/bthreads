@@ -947,7 +947,8 @@ describe(`Threads (${threads.backend})`, (ctx) => {
   });
 
   // https://github.com/nodejs/node/issues/26463
-  it.skip('should not buffer after onmessage removal', (cb) => {
+  // Update: the browser backend should mimic node.js behavior now.
+  it('should buffer after onmessage removal', (cb) => {
     const {port1, port2} = new threads.Channel();
     const text = [];
 
@@ -967,7 +968,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
           setTimeout(() => {
             port2.removeAllListeners('message');
-            assert.strictEqual(text.join(' '), 'hello');
+            assert.strictEqual(text.join(' '), 'hello world');
             cb();
           }, 100);
         }, 100);
