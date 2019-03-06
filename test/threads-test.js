@@ -941,7 +941,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     port1.on('message', fn);
     port1.close(() => {
-      port1.off('message', fn);
+      port1.removeListener('message', fn);
     });
   });
 
