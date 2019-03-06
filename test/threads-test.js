@@ -99,7 +99,6 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       assert(threads.browser);
 
     assert(typeof threads.source === 'string');
-    assert(threads.process);
   });
 
   it('should create message channel', (cb) => {
