@@ -470,7 +470,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(buf2.toString(), 'goodbye world');
 
     setTimeout(() => {
-      thread.terminate();
+      thread.close();
     }, 1000);
 
     return wait(thread, () => called, 1);
@@ -935,14 +935,15 @@ describe(`Threads (${threads.backend})`, (ctx) => {
   });
 
   // https://github.com/nodejs/node/issues/26463
-  it('should not throw on unbind after close', () => {
+  it('should not throw on unbind after close', async () => {
     const {port1} = new threads.Channel();
     const fn = () => {};
 
     port1.on('message', fn);
-    port1.close(() => {
-      port1.removeListener('message', fn);
-    });
+
+    await port1.close();
+
+    port1.removeListener('message', fn);
   });
 
   // https://github.com/nodejs/node/issues/26463

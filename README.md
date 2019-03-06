@@ -293,6 +293,10 @@ const worker = new threads.Worker(code, { eval: true });
   - `threads.importScripts(url)` - `importScripts()` wrapper (browser+worker
     only).
   - `threads.cores` - Number of CPU cores available.
+- Options
+  - `threads.bufferify` - A boolean indicating whether to cast Uint8Arrays
+     to Buffer objects after receiving. Only affects the high-level API. This
+     option in on by default.
 - High-Level API
   - `threads.Thread` - `Thread` Class (see below).
   - `threads.Port` - `Port` Class (see below).
@@ -338,8 +342,6 @@ const worker = new threads.Worker(code, { eval: true });
   - `Thread#stderr` (read only) - A readable stream representing stderr.
   - `Thread#threadId` (read only) - An integer representing the thread ID.
 - Methods
-  - `Thread#terminate([callback])` - Terminate the thread and optionally bind
-    to the `exit` event.
   - `Thread#close()` (async) - Terminate the thread and wait for exit but also
     listen for errors and reject the promise if any occur (in other words, a
     better `async` version of `Thread#terminate`).
@@ -384,8 +386,6 @@ const worker = new threads.Worker(code, { eval: true });
   - `Pool#close()` (async) - Close all threads in pool, reject on errors.
   - `Pool#next()` - Return the next thread in queue (this may spawn a new
     thread).
-  - `Pool#terminate(callback)` - Terminate all threads in pool, optionally
-    execute a callback once `exit` has been emitted for all threads.
   - `Pool#bind(name, handler)` - Bind remote event for all threads.
   - `Pool#unbind(name, handler)` - Unbind remote event for all threads.
   - `Pool#hook(name, handler)` - Add hook handler for all threads.
