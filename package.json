@@ -28,5 +28,10 @@
   "engines": {
     "node": ">=8.0.0"
   },
-  "browser": "./lib/bthreads-browser.js"
+  "browser": {
+    "./lib/bthreads": "./lib/browser/index.js",
+    "./process": "./lib/browser/index.js",
+    "./stable": "./lib/browser/index.js",
+    "./threads": "./lib/browser/index.js"
+  }
 }
