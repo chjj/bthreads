@@ -936,7 +936,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
   // https://github.com/nodejs/node/issues/26463
   it('should not throw on unbind after close', () => {
-    const {port1, port2} = new threads.Channel();
+    const {port1} = new threads.Channel();
     const fn = () => {};
 
     port1.on('message', fn);
