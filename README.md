@@ -70,8 +70,6 @@ Caveats for the `web_workers` backend:
   using a bundler, note that the bundler will _not_ be able to compile the
   eval'd code. This means that `require` will have limited usability
   (restricted to only core browserify modules and `bthreads` itself).
-- Furthermore, `options.eval` requires that `data:` be set for the [worker-src]
-  [Content-Security-Policy]. See [content-security-policy.com] for a guide.
 - The `close` event for MessagePorts only has partial support (if a thread
   suddenly terminates, `close` will not be emitted for any remote ports).
   This is because the `close` event is not yet a part of the standard Web
@@ -446,9 +444,6 @@ See LICENSE for more info.
 [child_process]: https://nodejs.org/api/child_process.html
 [web_workers]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
 [polyfill]: https://github.com/chjj/bthreads/blob/master/lib/browser/polyfill.js
-[worker-src]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src
-[Content-Security-Policy]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
-[content-security-policy.com]: https://content-security-policy.com/
 [bsock]: https://github.com/bcoin-org/bsock
 [bundle]: https://github.com/chjj/bthreads/blob/master/lib/browser/bundle.js
 [bthreads-bundle]: https://www.npmjs.com/package/bthreads-bundle

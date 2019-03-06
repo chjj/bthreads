@@ -17,7 +17,7 @@ const version = (0
   + (parts[3] & 0xff) * 0x00001);
 
 const PORT = (location.port >>> 0) || 80;
-const URL = `http://localhost:${PORT}/bundle.js`;
+const URL = `http://localhost:${PORT}/eval.js`;
 
 const vector = (index) => {
   let n = index.toString(10);
@@ -57,7 +57,7 @@ function wait(thread, test, expect) {
 }
 
 if (process.browser) {
-  register('/bundle.js', [__dirname, '../lib/browser/bundle.js']);
+  register('/eval.js', [__dirname, '../lib/browser/eval.js']);
   // 012.js calls 013.js. Must be registered here.
   register('/test/cases/013.js', [__dirname, './cases/013.js']);
 }

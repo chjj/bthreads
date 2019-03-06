@@ -6,7 +6,7 @@ const resolve = require('path').resolve.bind(null, __dirname);
 
 require('bpkg')({
   env: 'browser',
-  input: resolve('../lib/browser/bundle.js'),
+  input: resolve('../lib/browser/eval.js'),
   output: resolve('./index.js'),
   plugins: [
     ['babylonia', {
