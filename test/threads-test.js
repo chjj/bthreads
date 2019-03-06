@@ -933,4 +933,14 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     thread.on('error', cb);
     thread.on('exit', onExit(cb, () => called, 0));
   });
+
+  it('should not throw on unbind after close', () => {
+    const {port1, port2} = new threads.Channel();
+    const fn = () => {};
+
+    port1.on('message', fn);
+    port1.close(() => {
+      port1.off('message', fn);
+    });
+  });
 });
