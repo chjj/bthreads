@@ -50,6 +50,20 @@ bthreads has 4 backends and a few layers of fallback:
 The current backend is exposed as `threads.backend`. Note that the current
 backend can be set with the `BTHREADS_BACKEND` environment variable.
 
+### Multiple Entry Points
+
+`require('bthreads')` will automatically pick the backend depending on what is
+available, but in some cases that may not be what you want. Because of this,
+there are also more explicit entry points:
+
+- `require('bthreads/process')` - Always the `child_process` backend,
+  regardless of node version.
+- `require('bthreads/threads')` - Always the `worker_threads` backend,
+  regardless of node version.
+- `require('bthreads/stable')` - Currently the `child_process` backend. Will be
+  updated to point the the `worker_threads` backend once it's considered stable
+  (depends on node version, of course).
+
 ## Caveats
 
 Some caveats for the `child_process` backend:
