@@ -158,18 +158,15 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       workerData: 'foo'
     });
 
-    let called = false;
+    const job = wait(worker);
+    const msg = Buffer.from(await read(worker));
 
-    worker.on('message', (msg) => {
-      msg = Buffer.from(msg);
-      assert.strictEqual(msg.toString(), 'foobar');
-      called = true;
-      if (threads.browser)
-        worker._terminate(0);
-    });
+    assert.strictEqual(msg.toString(), 'foobar');
 
-    assert.strictEqual(await wait(worker), 0);
-    assert(called);
+    if (threads.browser)
+      worker._terminate(0);
+
+    assert.strictEqual(await job, 0);
   });
 
   it('should have stdin', async () => {
@@ -177,17 +174,13 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       stdin: true
     });
 
-    let called = false;
-
-    worker.on('message', (msg) => {
-      assert.strictEqual(msg, 'foobar');
-      called = true;
-    });
-
     worker.stdin.write('foo\n');
 
-    assert.strictEqual(await wait(worker), 0);
-    assert(called);
+    const job = wait(worker);
+    const msg = await read(worker);
+
+    assert.strictEqual(msg, 'foobar');
+    assert.strictEqual(await job, 0);
   });
 
   it('should not hang if there is no input', async (ctx) => {
@@ -214,18 +207,17 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       stdout: true
     });
 
-    let called = false;
-
     worker.stdout.setEncoding('utf8');
-    worker.stdout.on('data', (msg) => {
-      assert.strictEqual(msg, 'foobar');
-      called = true;
-      if (threads.browser)
-        worker._terminate(0);
-    });
 
-    assert.strictEqual(await wait(worker), 0);
-    assert(called);
+    const job = wait(worker);
+    const msg = await waitFor(worker.stdout, 'data');
+
+    assert.strictEqual(msg, 'foobar');
+
+    if (threads.browser)
+      worker._terminate(0);
+
+    assert.strictEqual(await job, 0);
   });
 
   it('should have stderr', async () => {
@@ -234,18 +226,17 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       stderr: true
     });
 
-    let called = false;
-
     worker.stderr.setEncoding('utf8');
-    worker.stderr.on('data', (msg) => {
-      assert.strictEqual(msg, 'foobar');
-      called = true;
-      if (threads.browser)
-        worker._terminate(0);
-    });
 
-    assert.strictEqual(await wait(worker), 0);
-    assert(called);
+    const job = wait(worker);
+    const msg = await waitFor(worker.stderr, 'data');
+
+    assert.strictEqual(msg, 'foobar');
+
+    if (threads.browser)
+      worker._terminate(0);
+
+    assert.strictEqual(await job, 0);
   });
 
   it('should have console.log', async () => {
@@ -254,18 +245,17 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       stdout: true
     });
 
-    let called = false;
-
     worker.stdout.setEncoding('utf8');
-    worker.stdout.on('data', (msg) => {
-      assert.strictEqual(msg, 'foobar\n');
-      called = true;
-      if (threads.browser)
-        worker._terminate(0);
-    });
 
-    assert.strictEqual(await wait(worker), 0);
-    assert(called);
+    const job = wait(worker);
+    const msg = await waitFor(worker.stdout, 'data');
+
+    assert.strictEqual(msg, 'foobar\n');
+
+    if (threads.browser)
+      worker._terminate(0);
+
+    assert.strictEqual(await job, 0);
   });
 
   it('should have console.error', async () => {
@@ -274,33 +264,28 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       stderr: true
     });
 
-    let called = false;
-
     worker.stderr.setEncoding('utf8');
-    worker.stderr.on('data', (msg) => {
-      assert.strictEqual(msg, 'foobar\n');
-      called = true;
-      if (threads.browser)
-        worker._terminate(0);
-    });
 
-    assert.strictEqual(await wait(worker), 0);
-    assert(called);
+    const job = wait(worker);
+    const msg = await waitFor(worker.stderr, 'data');
+
+    assert.strictEqual(msg, 'foobar\n');
+
+    if (threads.browser)
+      worker._terminate(0);
+
+    assert.strictEqual(await job, 0);
   });
 
   it('should terminate long running thread', async () => {
     const worker = new threads.Worker(vector(7));
+    const msg = await read(worker);
+    const job = wait(worker);
 
-    let called = false;
+    worker.terminate();
 
-    worker.on('message', (msg) => {
-      assert.strictEqual(msg, 'kill me');
-      called = true;
-      worker.terminate();
-    });
-
-    assert.strictEqual(await wait(worker), 1);
-    assert(called);
+    assert.strictEqual(msg, 'kill me');
+    assert.strictEqual(await job, 1);
   });
 
   it('should hang on input', async () => {
@@ -308,16 +293,16 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       stdin: true
     });
 
-    let called = false;
+    let exited = false;
 
     worker.on('exit', () => {
-      called = true;
+      exited = true;
     });
 
     // NOTE: worker_threads hangs even if we're not listening on stdin.
     await timeout(1000);
 
-    assert(!called);
+    assert(!exited);
 
     assert.strictEqual(await exit(worker), 1);
   });
@@ -328,30 +313,21 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     worker.postMessage(port2, [port2]);
 
-    let called = false;
+    const msg = await read(port1);
 
-    port1.on('message', (msg) => {
-      assert.strictEqual(msg, 'hello world');
-      called = true;
-    });
-
+    assert.strictEqual(msg, 'hello world');
     assert.strictEqual(await wait(worker), 0);
-    assert(called);
   });
 
   it('should open message port with parent', async () => {
     const worker = new threads.Worker(vector(10));
+    const port = await read(worker);
 
-    let called = false;
+    assert(port instanceof threads.MessagePort);
 
-    worker.on('message', (port) => {
-      assert(port instanceof threads.MessagePort);
-      port.postMessage('hello world');
-      called = true;
-    });
+    port.postMessage('hello world');
 
     assert.strictEqual(await wait(worker), 0);
-    assert(called);
   });
 
   it('should open port between children', async () => {
@@ -363,10 +339,10 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     worker1.postMessage(port1, [port1]);
     worker2.postMessage(port2, [port2]);
 
-    const codes = await job;
+    const [x, y] = await job;
 
-    assert.strictEqual(codes[0], 0);
-    assert.strictEqual(codes[1], 0);
+    assert.strictEqual(x, 0);
+    assert.strictEqual(y, 0);
   });
 
   it('should receive and send port', async () => {
@@ -374,19 +350,16 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     const worker2 = new threads.Worker(vector(9));
     const job = Promise.all([wait(worker1), wait(worker2)]);
 
-    let called = false;
+    const port = await read(worker1);
 
-    worker1.on('message', (port) => {
-      assert(port instanceof threads.MessagePort);
-      worker2.postMessage(port, [port]);
-      called = true;
-    });
+    assert(port instanceof threads.MessagePort);
 
-    const codes = await job;
+    worker2.postMessage(port, [port]);
 
-    assert.strictEqual(codes[0], 0);
-    assert.strictEqual(codes[1], 0);
-    assert(called);
+    const [x, y] = await job;
+
+    assert.strictEqual(x, 0);
+    assert.strictEqual(y, 0);
   });
 
   it('should create nested worker to talk to', async () => {
@@ -394,43 +367,34 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     // 012.js couldn't find 013.js (because it wasn't
     // registered). Investigate. Add errors tests.
     const worker = new threads.Worker(vector(12));
+    const job = wait(worker);
+    const port = await read(worker);
 
-    let called = false;
+    assert(port instanceof threads.MessagePort);
 
-    worker.on('message', (port) => {
-      assert(port instanceof threads.MessagePort);
-      port.on('message', (msg) => {
-        assert.strictEqual(msg, 'hello from below');
-        called = true;
-      });
-    });
+    const msg = await read(port);
 
-    assert.strictEqual(await wait(worker), 0);
-    assert(called);
+    assert.strictEqual(msg, 'hello from below');
+    assert.strictEqual(await job, 0);
   });
 
   it('should transfer buffer', async () => {
     const worker = new threads.Worker(vector(14));
-
-    let called = false;
-
-    worker.on('message', (msg) => {
-      msg = Buffer.from(msg);
-      assert.strictEqual(msg.toString(), 'foobar');
-      called = true;
-    });
-
+    const job = wait(worker);
     const data = Buffer.from('foobar');
 
     worker.postMessage(data, [data.buffer]);
+
+    const msg = Buffer.from(await read(worker));
+
+    assert.strictEqual(msg.toString(), 'foobar');
 
     if (threads.backend === 'web_workers'
         || threads.backend === 'worker_threads') {
       assert(data.length === 0);
     }
 
-    assert.strictEqual(await wait(worker), 0);
-    assert(called);
+    assert.strictEqual(await job, 0);
   });
 
   it('should eval string', async () => {
@@ -459,15 +423,10 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       eval: true
     });
 
-    let called = false;
+    const msg = await read(worker);
 
-    worker.on('message', (msg) => {
-      assert.strictEqual(msg, 'evaled!');
-      called = true;
-    });
-
+    assert.strictEqual(msg, 'evaled!');
     assert.strictEqual(await wait(worker), 2);
-    assert(called);
   });
 
   it('should do basic thread test', async () => {
@@ -692,9 +651,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await thread.wait(), 0);
   });
 
-  it('should transfer blob to thread', (cb) => {
+  it('should transfer blob to thread', async (ctx) => {
     if (!threads.browser)
-      cb.skip();
+      ctx.skip();
 
     const blob = new Blob(['foobar'], { type: 'text/plain' });
 
@@ -704,16 +663,34 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       await parent.call('blob', [workerData]);
     }, { header: URL, workerData: blob });
 
-    thread.hook('blob', async (blob) => {
-      assert.strictEqual(await readBlob(blob), 'foobar');
-      await thread.close();
-      cb();
-    });
+    const ret = await new Promise(cb => thread.hook('blob', cb));
+
+    assert.strictEqual(await readBlob(ret), 'foobar');
+
+    await thread.close();
   });
 
-  it('should import scripts', async (x) => {
-    if (threads.backend !== 'web_workers')
-      x.skip();
+  it('should transfer blob to thread (2)', async (ctx) => {
+    if (!threads.browser)
+      ctx.skip();
+
+    const blob = new Blob(['foobar'], { type: 'text/plain' });
+
+    const thread = new threads.Thread(async () => {
+      const {parent, workerData} = module.require('bthreads');
+      parent.send(workerData);
+    }, { header: URL, workerData: blob });
+
+    const ret = await read(thread);
+
+    assert.strictEqual(await readBlob(ret), 'foobar');
+
+    await thread.close();
+  });
+
+  it('should import scripts', async (ctx) => {
+    if (!threads.browser)
+      ctx.skip();
 
     const thread = new threads.Thread(() => {
       const assert = module.require('assert');
@@ -729,17 +706,13 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       process.exit(0);
     }, { header: URL, stdout: true });
 
-    let called = false;
-
     // Test stdout while we're at it.
     thread.stdout.setEncoding('utf8');
-    thread.stdout.on('data', (data) => {
-      assert.strictEqual(data.trim(), '1.9.1');
-      called = true;
-    });
 
+    const data = await waitFor(thread.stdout, 'data');
+
+    assert.strictEqual(data, '1.9.1\n');
     assert.strictEqual(await thread.wait(), 0);
-    assert(called);
   });
 
   it('should send port to thread', async () => {
@@ -823,18 +796,16 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       stdout: true
     });
 
-    let called = false;
-
     worker.stdout.setEncoding('utf8');
-    worker.stdout.on('data', (msg) => {
-      assert.strictEqual(msg, 'foobar\n');
-      called = true;
-      if (threads.browser)
-        worker._terminate(0);
-    });
+
+    const msg = await waitFor(worker.stdout, 'data');
+
+    assert.strictEqual(msg, 'foobar\n');
+
+    if (threads.browser)
+      worker._terminate(0);
 
     assert.strictEqual(await wait(worker), 0);
-    assert(called);
   });
 
   it('should propagate stdout through multiple layers', async (ctx) => {
@@ -857,15 +828,10 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       });
     }, { stdout: true });
 
-    let called = false;
+    const data = await waitFor(thread.stdout, 'data');
 
-    thread.stdout.on('data', (data) => {
-      assert.strictEqual(data.toString('utf8'), 'foobar\n');
-      called = true;
-    });
-
+    assert.strictEqual(data.toString('utf8'), 'foobar\n');
     assert.strictEqual(await thread.wait(), 0);
-    assert(called);
   });
 
   it('should throw error', async () => {
@@ -967,20 +933,17 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       ]);
     }, { dirname: __dirname });
 
-    let called = false;
+    const msg = await read(thread);
 
-    thread.on('message', (msg) => {
-      assert(Array.isArray(msg));
-      assert.strictEqual(msg[0], '/');
-      assert.strictEqual(msg[1], __dirname);
-      assert.strictEqual(msg[2], require.resolve('bthreads'));
-      assert.strictEqual(msg[3], require.resolve('./threads-test.js'));
-      process.chdir(cwd);
-      called = true;
-    });
+    assert(Array.isArray(msg));
+    assert.strictEqual(msg[0], '/');
+    assert.strictEqual(msg[1], __dirname);
+    assert.strictEqual(msg[2], require.resolve('bthreads'));
+    assert.strictEqual(msg[3], require.resolve('./threads-test.js'));
+
+    process.chdir(cwd);
 
     assert.strictEqual(await thread.wait(), 0);
-    assert(called);
   });
 
   // https://github.com/nodejs/node/issues/26463
@@ -1015,6 +978,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     text.push(await read(port2));
 
     port2.removeAllListeners('message');
+
     assert.strictEqual(text.join(' '), 'hello world');
   });
 
@@ -1042,17 +1006,17 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         });
       }, { header: URL, workerData: name });
 
-      let called = false;
+      let closed = false;
 
       port2.on('close', () => {
-        called = true;
+        closed = true;
       });
 
       thread.send(port1, [port1]);
 
       await thread.wait();
 
-      assert(called);
+      assert(closed);
     });
   }
 });
