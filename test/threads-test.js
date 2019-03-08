@@ -56,6 +56,17 @@ function wait(thread, test, expect) {
   });
 }
 
+async function readBlob(blob) {
+  const reader = new FileReader();
+  reader.readAsText(blob);
+  return new Promise((resolve, reject) => {
+    reader.onerror = reject;
+    reader.onloadend = () => {
+      resolve(reader.result);
+    };
+  });
+}
+
 if (process.browser) {
   register('/eval.js', [__dirname, '../lib/browser/eval.js']);
   // 012.js calls 013.js. Must be registered here.
@@ -673,6 +684,25 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     return wait(thread, 0);
   });
 
+  it('should transfer blob to thread', (cb) => {
+    if (!threads.browser)
+      cb.skip();
+
+    const blob = new Blob(['foobar'], { type: 'text/plain' });
+
+    const thread = new threads.Thread(async () => {
+      const {parent, workerData} = global.require('bthreads');
+
+      await parent.call('blob', [workerData]);
+    }, { header: URL, workerData: blob });
+
+    thread.hook('blob', async (blob) => {
+      assert.strictEqual(await readBlob(blob), 'foobar');
+      await thread.close();
+      cb();
+    });
+  });
+
   it('should import scripts', async (x) => {
     if (threads.backend !== 'web_workers')
       x.skip();
@@ -908,7 +938,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     process.chdir('/');
 
     const thread = new threads.Thread(() => {
-      const {parent} = require('bthreads');
+      const {parent} = global.require('bthreads');
       parent.send([
         process.cwd(),
         __dirname,
