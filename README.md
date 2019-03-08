@@ -66,10 +66,16 @@ Caveats for the `web_workers` backend:
 
 - `options.workerData` possibly has a limited size depending on the browser
   (the maximum size of `options.name`).
-- `options.eval` will create a data URI and execute a new worker from it. When
-  using a bundler, note that the bundler will _not_ be able to compile the
-  eval'd code. This means that `require` will have limited usability
-  (restricted to only core browserify modules and `bthreads` itself).
+- `options.eval` requires header or "prelude" file for code. This is
+  essentially a bundle which provides all the necessary browserify modules
+  (such that `require('path')` works, for example), as well as bthreads itself.
+  By default, bthreads will pull in its own [bundle] as an [npm
+  package][bthreads-bundle] from [unpkg.com]. If using the default header file,
+  you must have `blob:` and/or `data:` set as a [Content-Security-Policy]
+  source (see [content-security-policy.com] for a guide). When using a bundler,
+  note that the bundler will _not_ be able to compile the eval'd code. This
+  means that `require` will have limited usability (restricted to only core
+  browserify modules and `bthreads` itself).
 - The `close` event for MessagePorts only has partial support (if a thread
   suddenly terminates, `close` will not be emitted for any remote ports).
   This is because the `close` event is not yet a part of the standard Web
@@ -417,12 +423,9 @@ nearly identical to the [worker_threads] worker options with some differences:
   browser backend (see [web_workers]). Note that `options.type = 'module'` will
   not work with the `polyfill` backend. If a file extension is `.mjs`,
   `options.type` is automatically set to `module` for consistency with node.js.
-- The browser backend requires a header or "prelude" file for eval'd code. This
-  is essentially a bundle which provides all the necessary browserify modules
-  (such that `require('path')` works, for example), as well as bthreads itself.
-  When using a browser backend `options.header` is a valid option. It should be
-  the URL to a [bundle]. By default, bthreads imports the [bthreads-bundle]
-  package from [unpkg.com].
+- `options.header` is a valid option in the browser when used in combination
+  with `options.eval`. Its value should be the URL of a compiled [bundle] file.
+  For security, it's recommended to serve your own header file.
 - The `Pool` class accepts `size` option. This allows you to manually set the
   pool size instead of determining it by the number of CPU cores.
 - `options.dirname` allows you to set the `__dirname` of an eval'd module.
@@ -444,7 +447,9 @@ See LICENSE for more info.
 [child_process]: https://nodejs.org/api/child_process.html
 [web_workers]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
 [polyfill]: https://github.com/chjj/bthreads/blob/master/lib/browser/polyfill.js
+[Content-Security-Policy]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+[content-security-policy.com]: https://content-security-policy.com/
 [bsock]: https://github.com/bcoin-org/bsock
-[bundle]: https://github.com/chjj/bthreads/blob/master/lib/browser/bundle.js
+[bundle]: https://github.com/chjj/bthreads/blob/master/lib/browser/eval.js
 [bthreads-bundle]: https://www.npmjs.com/package/bthreads-bundle
 [unpkg.com]: https://unpkg.com/
