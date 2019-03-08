@@ -302,7 +302,7 @@ const worker = new threads.Worker(code, { eval: true });
 - Options
   - `threads.bufferify` - A boolean indicating whether to cast Uint8Arrays
      to Buffer objects after receiving. Only affects the high-level API. This
-     option in on by default.
+     option is on by default.
 - High-Level API
   - `threads.Thread` - `Thread` Class (see below).
   - `threads.Port` - `Port` Class (see below).
