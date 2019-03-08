@@ -348,9 +348,11 @@ const worker = new threads.Worker(code, { eval: true });
   - `Thread#stderr` (read only) - A readable stream representing stderr.
   - `Thread#threadId` (read only) - An integer representing the thread ID.
 - Methods
-  - `Thread#close()` (async) - Terminate the thread and wait for exit but also
-    listen for errors and reject the promise if any occur (in other words, a
-    better `async` version of `Thread#terminate`).
+  - `Thread#close()` (async) - Terminate the thread and wait for `exit` event
+    but also listen for errors and reject the promise if any occur (in other
+    words, a better `async` version of `Thread#terminate`).
+  - `Thread#wait()` (async) - Wait for thread to exit, but do not invoke
+    `close()`.
 - Events
   - `Thread@online()` - Emitted once thread is online.
   - `Thread@exit(code)` - Emitted on exit.
@@ -361,7 +363,10 @@ const worker = new threads.Worker(code, { eval: true });
   - `new Port()` - Not meant to be called directly.
 - Methods
   - `Port#start()` - Open and bind port (usually automatic).
-  - `Port#close()` - Close port.
+  - `Port#close()` (async) - Close the port and wait for `close` event, but
+    also listen for errors and reject the promise if any occur.
+  - `Port#wait()` (async) - Wait for thread to exit, but do not invoke
+    `close()`.
 - Events
   - `Port@close()` - Emitted on port close.
 
