@@ -16,8 +16,9 @@ const version = (0
   + (parts[2] & 0xff) * 0x00100
   + (parts[3] & 0xff) * 0x00001);
 
+const PROTO = location.protocol || 'http:';
 const PORT = (location.port >>> 0) || 80;
-const URL = `http://localhost:${PORT}/eval.js`;
+const URL = `${PROTO}//localhost:${PORT}/eval.js`;
 
 const vector = (index) => {
   let n = index.toString(10);
@@ -28,34 +29,6 @@ const vector = (index) => {
   return join(__dirname, 'cases', `${n}.js`);
 };
 
-function onExit(cb, test, expect) {
-  if (typeof test === 'number')
-    [test, expect] = [expect, test];
-
-  return (code) => {
-    if ((code >>> 0) !== (expect >>> 0))
-      cb(new Error('Exit code: ' + code));
-    else if (test && !test())
-      cb(new Error('Condition not met.'));
-    else
-      cb();
-  };
-}
-
-function wait(thread, test, expect) {
-  return new Promise((resolve, reject) => {
-    const cb = (err) => {
-      if (err)
-        reject(err);
-      else
-        resolve();
-    };
-
-    thread.on('error', reject);
-    thread.on('exit', onExit(cb, test, expect));
-  });
-}
-
 async function readBlob(blob) {
   const reader = new FileReader();
   reader.readAsText(blob);
@@ -65,6 +38,62 @@ async function readBlob(blob) {
       resolve(reader.result);
     };
   });
+}
+
+async function waitFor(ee, name, func) {
+  return new Promise((resolve, reject) => {
+    let onEvent, onError;
+
+    const cleanup = () => {
+      ee.removeListener(name, onEvent);
+
+      if (name !== 'error')
+        ee.removeListener('error', onError);
+    };
+
+    onEvent = (res) => {
+      cleanup();
+      resolve(res);
+    };
+
+    onError = (err) => {
+      cleanup();
+      reject(err);
+    };
+
+    ee.on(name, onEvent);
+
+    if (name !== 'error')
+      ee.on('error', onError);
+
+    if (func) {
+      try {
+        func.call(ee);
+      } catch (e) {
+        onError(e);
+      }
+    }
+  });
+}
+
+async function read(worker) {
+  return waitFor(worker, 'message');
+}
+
+async function wait(worker) {
+  return waitFor(worker, 'exit');
+}
+
+async function close(port) {
+  return waitFor(port, 'close', port.close);
+}
+
+async function exit(worker) {
+  return waitFor(worker, 'exit', worker.terminate);
+}
+
+async function timeout(ms) {
+  return new Promise(cb => setTimeout(cb, ms));
 }
 
 if (process.browser) {
@@ -112,20 +141,19 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert(typeof threads.source === 'string');
   });
 
-  it('should create message channel', (cb) => {
+  it('should create message channel', async () => {
     const {port1, port2} = new threads.MessageChannel();
 
-    port2.on('message', (msg) => {
-      assert.deepStrictEqual(msg, { foo: 1 });
-      port1.close();
-      port2.close();
-      cb();
-    });
-
     port1.postMessage({ foo: 1 });
+
+    const msg = await read(port2);
+
+    assert.deepStrictEqual(msg, { foo: 1 });
+
+    await Promise.all([close(port1), close(port2)]);
   });
 
-  it('should create worker with data', (cb) => {
+  it('should create worker with data', async () => {
     const worker = new threads.Worker(vector(1), {
       workerData: 'foo'
     });
@@ -140,11 +168,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         worker._terminate(0);
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should have stdin', (cb) => {
+  it('should have stdin', async () => {
     const worker = new threads.Worker(vector(2), {
       stdin: true
     });
@@ -156,15 +184,15 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       called = true;
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
-
     worker.stdin.write('foo\n');
+
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should not hang if there is no input', (cb) => {
+  it('should not hang if there is no input', async (ctx) => {
     if (threads.browser)
-      cb.skip();
+      ctx.skip();
 
     const worker = new threads.Worker(vector(2), {
       stdin: true
@@ -176,11 +204,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       called = true;
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => !called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(!called);
   });
 
-  it('should have stdout', (cb) => {
+  it('should have stdout', async () => {
     const worker = new threads.Worker(vector(3), {
       workerData: 'foo',
       stdout: true
@@ -196,11 +224,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         worker._terminate(0);
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should have stderr', (cb) => {
+  it('should have stderr', async () => {
     const worker = new threads.Worker(vector(4), {
       workerData: 'foo',
       stderr: true
@@ -216,11 +244,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         worker._terminate(0);
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should have console.log', (cb) => {
+  it('should have console.log', async () => {
     const worker = new threads.Worker(vector(5), {
       workerData: 'foo',
       stdout: true
@@ -236,11 +264,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         worker._terminate(0);
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should have console.error', (cb) => {
+  it('should have console.error', async () => {
     const worker = new threads.Worker(vector(6), {
       workerData: 'foo',
       stderr: true
@@ -256,11 +284,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         worker._terminate(0);
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should terminate long running thread', (cb) => {
+  it('should terminate long running thread', async () => {
     const worker = new threads.Worker(vector(7));
 
     let called = false;
@@ -271,32 +299,30 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       worker.terminate();
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called, 1));
+    assert.strictEqual(await wait(worker), 1);
+    assert(called);
   });
 
-  it('should hang on input', (cb) => {
+  it('should hang on input', async () => {
     const worker = new threads.Worker(vector(8), {
       stdin: true
     });
 
     let called = false;
 
-    worker.on('error', cb);
-
     worker.on('exit', () => {
       called = true;
     });
 
     // NOTE: worker_threads hangs even if we're not listening on stdin.
-    setTimeout(() => {
-      assert(!called);
-      worker.terminate();
-      cb();
-    }, 1000);
+    await timeout(1000);
+
+    assert(!called);
+
+    assert.strictEqual(await exit(worker), 1);
   });
 
-  it('should open message port with child', (cb) => {
+  it('should open message port with child', async () => {
     const worker = new threads.Worker(vector(9));
     const {port1, port2} = new threads.MessageChannel();
 
@@ -309,11 +335,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       called = true;
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should open message port with parent', (cb) => {
+  it('should open message port with parent', async () => {
     const worker = new threads.Worker(vector(10));
 
     let called = false;
@@ -324,42 +350,31 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       called = true;
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should open port between children', (cb) => {
+  it('should open port between children', async () => {
     const worker1 = new threads.Worker(vector(11));
     const worker2 = new threads.Worker(vector(11));
     const {port1, port2} = new threads.MessageChannel();
-
-    worker1.on('error', cb);
-    worker2.on('error', cb);
-
-    let i = 2;
-
-    function done(err) {
-      if (err)
-        cb(err);
-      else if (--i === 0)
-        cb();
-    }
-
-    worker1.on('exit', onExit(done));
-    worker2.on('exit', onExit(done));
+    const job = Promise.all([wait(worker1), wait(worker2)]);
 
     worker1.postMessage(port1, [port1]);
     worker2.postMessage(port2, [port2]);
+
+    const codes = await job;
+
+    assert.strictEqual(codes[0], 0);
+    assert.strictEqual(codes[1], 0);
   });
 
-  it('should receive and send port', (cb) => {
+  it('should receive and send port', async () => {
     const worker1 = new threads.Worker(vector(10));
     const worker2 = new threads.Worker(vector(9));
+    const job = Promise.all([wait(worker1), wait(worker2)]);
 
     let called = false;
-
-    worker1.on('error', cb);
-    worker2.on('error', cb);
 
     worker1.on('message', (port) => {
       assert(port instanceof threads.MessagePort);
@@ -367,20 +382,14 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       called = true;
     });
 
-    let i = 2;
+    const codes = await job;
 
-    function done(err) {
-      if (err)
-        cb(err);
-      else if (--i === 0)
-        cb();
-    }
-
-    worker1.on('exit', onExit(done, () => called));
-    worker2.on('exit', onExit(done, () => called));
+    assert.strictEqual(codes[0], 0);
+    assert.strictEqual(codes[1], 0);
+    assert(called);
   });
 
-  it('should create nested worker to talk to', (cb) => {
+  it('should create nested worker to talk to', async () => {
     // NOTE: This was failing _silently_ earlier when
     // 012.js couldn't find 013.js (because it wasn't
     // registered). Investigate. Add errors tests.
@@ -396,16 +405,14 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       });
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should transfer buffer', (cb) => {
+  it('should transfer buffer', async () => {
     const worker = new threads.Worker(vector(14));
 
     let called = false;
-
-    worker.on('error', cb);
 
     worker.on('message', (msg) => {
       msg = Buffer.from(msg);
@@ -422,14 +429,15 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       assert(data.length === 0);
     }
 
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should eval string', (cb) => {
+  it('should eval string', async () => {
     function workerThread() {
-      const assert = global.require('assert');
-      const path = global.require('path');
-      const threads = global.require('bthreads');
+      const assert = module.require('assert');
+      const path = module.require('path');
+      const threads = module.require('bthreads');
 
       assert(threads.parentPort);
       assert.strictEqual(module.id, '[worker eval]');
@@ -453,14 +461,13 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     let called = false;
 
-    worker.on('error', cb);
-
     worker.on('message', (msg) => {
       assert.strictEqual(msg, 'evaled!');
       called = true;
     });
 
-    worker.on('exit', onExit(cb, () => called, 2));
+    assert.strictEqual(await wait(worker), 2);
+    assert(called);
   });
 
   it('should do basic thread test', async () => {
@@ -483,7 +490,8 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       thread.close();
     }, 1000);
 
-    return wait(thread, () => called, 1);
+    assert.strictEqual(await thread.wait(), 1);
+    assert(called);
   });
 
   it('should test pool (serial)', async () => {
@@ -533,8 +541,8 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
   it('should transfer buffer to thread', async () => {
     const thread = new threads.Thread(() => {
-      const assert = global.require('assert');
-      const {parent} = global.require('bthreads');
+      const assert = module.require('assert');
+      const {parent} = module.require('bthreads');
 
       parent.hook('job', (data) => {
         assert(Buffer.isBuffer(data));
@@ -554,12 +562,12 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert(Buffer.isBuffer(result));
     assert(result.length === 3);
 
-    return wait(thread, 0);
+    assert.strictEqual(await thread.wait(), 0);
   });
 
   it('should transfer complex data to thread', async () => {
     const thread = new threads.Thread(() => {
-      const {parent} = global.require('bthreads');
+      const {parent} = module.require('bthreads');
 
       parent.hook('job', (data) => {
         setTimeout(() => process.exit(0), 100);
@@ -681,7 +689,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       assert.deepStrictEqual(result, data);
     }
 
-    return wait(thread, 0);
+    assert.strictEqual(await thread.wait(), 0);
   });
 
   it('should transfer blob to thread', (cb) => {
@@ -691,7 +699,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     const blob = new Blob(['foobar'], { type: 'text/plain' });
 
     const thread = new threads.Thread(async () => {
-      const {parent, workerData} = global.require('bthreads');
+      const {parent, workerData} = module.require('bthreads');
 
       await parent.call('blob', [workerData]);
     }, { header: URL, workerData: blob });
@@ -708,8 +716,8 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       x.skip();
 
     const thread = new threads.Thread(() => {
-      const assert = global.require('assert');
-      const threads = global.require('bthreads');
+      const assert = module.require('assert');
+      const threads = module.require('bthreads');
 
       const _ = threads.importScripts(
         'https://unpkg.com/underscore@1.9.1/underscore.js');
@@ -730,12 +738,13 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       called = true;
     });
 
-    return wait(thread, () => called, 0);
+    assert.strictEqual(await thread.wait(), 0);
+    assert(called);
   });
 
   it('should send port to thread', async () => {
     const thread = new threads.Thread(() => {
-      const {parent} = global.require('bthreads');
+      const {parent} = module.require('bthreads');
 
       parent.hook('port', (port) => {
         port.hook('job', () => {
@@ -758,14 +767,14 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     // Double-evaled nested workers with ports
     // sent down two layers. How cool is that?
     const thread = new threads.Thread(() => {
-      const threads = global.require('bthreads');
+      const threads = module.require('bthreads');
       const {parent} = threads;
 
       let thread;
 
       parent.hook('spawn', () => {
         thread = new threads.Thread(() => {
-          const {parent} = global.require('bthreads');
+          const {parent} = module.require('bthreads');
 
           parent.hook('port', (port) => {
             port.hook('job', () => {
@@ -797,19 +806,18 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     await thread.close();
   });
 
-  it('should close child', (cb) => {
+  it('should close child', async (ctx) => {
     if (threads.browser)
-      cb.skip();
+      ctx.skip();
 
     const worker = new threads.Worker(vector(16));
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb));
+    assert.strictEqual(await wait(worker), 0);
   });
 
-  it('should bind console without require', (cb) => {
+  it('should bind console without require', async (ctx) => {
     if (threads.browser)
-      cb.skip();
+      ctx.skip();
 
     const worker = new threads.Worker(vector(17), {
       stdout: true
@@ -825,22 +833,22 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         worker._terminate(0);
     });
 
-    worker.on('error', cb);
-    worker.on('exit', onExit(cb, () => called));
+    assert.strictEqual(await wait(worker), 0);
+    assert(called);
   });
 
-  it('should propagate stdout through multiple layers', (cb) => {
+  it('should propagate stdout through multiple layers', async (ctx) => {
     if (threads.browser)
-      cb.skip();
+      ctx.skip();
 
     const thread = new threads.Thread(() => {
-      const threads = global.require('bthreads');
+      const threads = module.require('bthreads');
 
       new threads.Thread(() => {
-        const threads = global.require('bthreads');
+        const threads = module.require('bthreads');
 
         new threads.Thread(() => {
-          const threads = global.require('bthreads');
+          const threads = module.require('bthreads');
 
           new threads.Thread(() => {
             console.log('foobar');
@@ -851,18 +859,18 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     let called = false;
 
-    thread.on('error', cb);
-    thread.on('exit', onExit(cb, () => called));
-
     thread.stdout.on('data', (data) => {
       assert.strictEqual(data.toString('utf8'), 'foobar\n');
       called = true;
     });
+
+    assert.strictEqual(await thread.wait(), 0);
+    assert(called);
   });
 
   it('should throw error', async () => {
     const thread = new threads.Thread(() => {
-      const threads = global.require('bthreads');
+      const threads = module.require('bthreads');
 
       threads.parent.hook('job', () => {
         throw new Error('foobar');
@@ -882,9 +890,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     await thread.close();
   });
 
-  it('should propagate exception', (cb) => {
+  it('should propagate exception', async (ctx) => {
     if (threads.backend === 'polyfill')
-      cb.skip();
+      ctx.skip();
 
     const thread = new threads.Thread(() => {
       setImmediate(() => {
@@ -892,24 +900,30 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       });
     }, { header: URL });
 
-    let called = false;
+    let code = 0;
+    let err = null;
 
-    thread.on('error', (err) => {
-      assert(!called);
-      assert.strictEqual(err.message, 'foobar');
-      called = true;
+    thread.on('exit', (code_) => {
+      code = code_;
     });
 
-    thread.on('exit', onExit(cb, () => called, 1));
+    try {
+      await thread.wait();
+    } catch (e) {
+      err = e;
+    }
+
+    assert.strictEqual(code, 0);
+    assert.strictEqual(err && err.message, 'foobar');
   });
 
-  it('should propagate rejection', (cb) => {
+  it('should propagate rejection', async (ctx) => {
     if (threads.backend === 'polyfill')
-      cb.skip();
+      ctx.skip();
 
     const thread = new threads.Thread(() => {
       // Need this for `worker_threads` backend.
-      global.require('bthreads');
+      module.require('bthreads');
 
       setImmediate(() => {
         new Promise((resolve, reject) => {
@@ -918,27 +932,33 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       });
     }, { header: URL });
 
-    let called = false;
+    let code = 0;
+    let err = null;
 
-    thread.on('error', (err) => {
-      assert(!called);
-      assert.strictEqual(err.message, 'foobar');
-      called = true;
+    thread.on('exit', (code_) => {
+      code = code_;
     });
 
-    thread.on('exit', onExit(cb, () => called, 1));
+    try {
+      await thread.wait();
+    } catch (e) {
+      err = e;
+    }
+
+    assert.strictEqual(code, 0);
+    assert.strictEqual(err && err.message, 'foobar');
   });
 
-  it('should set module dirname', (cb) => {
+  it('should set module dirname', async (ctx) => {
     if (threads.browser)
-      cb.skip();
+      ctx.skip();
 
     const cwd = process.cwd();
 
     process.chdir('/');
 
     const thread = new threads.Thread(() => {
-      const {parent} = global.require('bthreads');
+      const {parent} = module.require('bthreads');
       parent.send([
         process.cwd(),
         __dirname,
@@ -959,8 +979,8 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       called = true;
     });
 
-    thread.on('error', cb);
-    thread.on('exit', onExit(cb, () => called, 0));
+    assert.strictEqual(await thread.wait(), 0);
+    assert(called);
   });
 
   // https://github.com/nodejs/node/issues/26463
@@ -977,31 +997,62 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
   // https://github.com/nodejs/node/issues/26463
   // Update: the browser backend should mimic node.js behavior now.
-  it('should buffer after onmessage removal', (cb) => {
+  it('should buffer after onmessage removal', async () => {
     const {port1, port2} = new threads.Channel();
     const text = [];
 
     port1.send('hello');
 
-    setTimeout(() => {
-      port2.on('message', (data) => {
-        text.push(data);
+    await timeout(100);
 
-        port2.removeAllListeners('message');
-        port1.send('world');
+    text.push(await read(port2));
 
-        setTimeout(() => {
-          port2.on('message', (data) => {
-            text.push(data);
-          });
+    port2.removeAllListeners('message');
+    port1.send('world');
 
-          setTimeout(() => {
-            port2.removeAllListeners('message');
-            assert.strictEqual(text.join(' '), 'hello world');
-            cb();
-          }, 100);
-        }, 100);
-      });
-    }, 100);
+    await timeout(100);
+
+    text.push(await read(port2));
+
+    port2.removeAllListeners('message');
+    assert.strictEqual(text.join(' '), 'hello world');
   });
+
+  for (const name of ['port-close', 'no-port-close']) {
+    it(`should emit close remote port (${name})`, async (ctx) => {
+      // Browser backend doesn't track all ports yet.
+      if (name === 'no-port-close' && threads.browser)
+        ctx.skip();
+
+      const {port1, port2} = new threads.Channel();
+
+      const thread = new threads.Thread(() => {
+        const threads = module.require('bthreads');
+        const {parent, workerData} = threads;
+        const name = workerData;
+
+        parent.on('message', (port) => {
+          if (name === 'port-close')
+            port.close();
+
+          if (threads.browser)
+            threads.exit(0);
+          else
+            parent.close();
+        });
+      }, { header: URL, workerData: name });
+
+      let called = false;
+
+      port2.on('close', () => {
+        called = true;
+      });
+
+      thread.send(port1, [port1]);
+
+      await thread.wait();
+
+      assert(called);
+    });
+  }
 });
