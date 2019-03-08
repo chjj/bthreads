@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* global register, BigInt */
+/* global register, BigInt, Blob, FileReader */
 
 'use strict';
 
