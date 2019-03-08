@@ -10,5 +10,5 @@ threads.parentPort.on('message', (port) => {
   port.postMessage('hello world');
   setTimeout(() => {
     process.exit(0);
-  }, 100);
+  }, 10);
 });

@@ -11,7 +11,7 @@ threads.parentPort.on('message', (port) => {
     assert.strictEqual(msg, 'hello world');
     setTimeout(() => {
       process.exit(0);
-    }, 100);
+    }, 10);
   });
   port.postMessage('hello world');
 });

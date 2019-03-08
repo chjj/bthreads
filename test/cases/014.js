@@ -20,5 +20,5 @@ threads.parentPort.on('message', (buf) => {
 
   setTimeout(() => {
     process.exit(0);
-  }, 1000);
+  }, 10);
 });

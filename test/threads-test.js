@@ -146,9 +146,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     port1.postMessage({ foo: 1 });
 
-    const msg = await read(port2);
-
-    assert.deepStrictEqual(msg, { foo: 1 });
+    assert.deepStrictEqual(await read(port2), { foo: 1 });
 
     await Promise.all([close(port1), close(port2)]);
   });
@@ -174,12 +172,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       stdin: true
     });
 
+    const job = wait(worker);
+
     worker.stdin.write('foo\n');
 
-    const job = wait(worker);
-    const msg = await read(worker);
-
-    assert.strictEqual(msg, 'foobar');
+    assert.strictEqual(await read(worker), 'foobar');
     assert.strictEqual(await job, 0);
   });
 
@@ -313,9 +310,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     worker.postMessage(port2, [port2]);
 
-    const msg = await read(port1);
-
-    assert.strictEqual(msg, 'hello world');
+    assert.strictEqual(await read(port1), 'hello world');
     assert.strictEqual(await wait(worker), 0);
   });
 
@@ -372,9 +367,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     assert(port instanceof threads.MessagePort);
 
-    const msg = await read(port);
-
-    assert.strictEqual(msg, 'hello from below');
+    assert.strictEqual(await read(port), 'hello from below');
     assert.strictEqual(await job, 0);
   });
 
@@ -414,7 +407,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
       setTimeout(() => {
         process.exit(2);
-      }, 100);
+      }, 50);
     }
 
     const code = `(${workerThread}).call(this);`;
@@ -423,9 +416,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       eval: true
     });
 
-    const msg = await read(worker);
-
-    assert.strictEqual(msg, 'evaled!');
+    assert.strictEqual(await read(worker), 'evaled!');
     assert.strictEqual(await wait(worker), 2);
   });
 
@@ -445,11 +436,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(buf1.toString(), 'hello world');
     assert.strictEqual(buf2.toString(), 'goodbye world');
 
-    setTimeout(() => {
-      thread.close();
-    }, 1000);
-
-    assert.strictEqual(await thread.wait(), 1);
+    assert.strictEqual(await thread.close(), 1);
     assert(called);
   });
 
@@ -505,7 +492,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
       parent.hook('job', (data) => {
         assert(Buffer.isBuffer(data));
-        setTimeout(() => process.exit(0), 100);
+        setTimeout(() => process.exit(0), 50);
         return [data, [data.buffer]];
       });
     }, { header: URL });
@@ -529,7 +516,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       const {parent} = module.require('bthreads');
 
       parent.hook('job', (data) => {
-        setTimeout(() => process.exit(0), 100);
+        setTimeout(() => process.exit(0), 50);
         return data;
       });
     }, { header: URL });
@@ -966,14 +953,14 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     port1.send('hello');
 
-    await timeout(100);
+    await timeout(50);
 
     text.push(await read(port2));
 
     port2.removeAllListeners('message');
     port1.send('world');
 
-    await timeout(100);
+    await timeout(50);
 
     text.push(await read(port2));
 

@@ -12,4 +12,4 @@ process.stdin.on('data', (data) => {
 
 setTimeout(() => {
   process.exit(0);
-}, 100);
+}, 50);
