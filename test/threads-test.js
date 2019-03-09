@@ -919,8 +919,6 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     if (threads.browser)
       ctx.skip();
 
-    const cwd = process.cwd();
-
     process.chdir('/');
 
     const thread = new threads.Thread(() => {
@@ -941,9 +939,12 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(msg[2], require.resolve('../'));
     assert.strictEqual(msg[3], require.resolve('./threads-test.js'));
 
-    process.chdir(cwd);
-
     assert.strictEqual(await thread.wait(), 0);
+  });
+
+  it('should switch back to original cwd', () => {
+    if (!threads.browser)
+      process.chdir(cwd);
   });
 
   // https://github.com/nodejs/node/issues/26463
