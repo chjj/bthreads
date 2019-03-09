@@ -412,7 +412,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     const code = `(${workerThread}).call(this);`;
     const worker = new threads.Worker(code, {
-      header: URL,
+      bootstrap: URL,
       eval: true
     });
 
@@ -495,7 +495,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         setTimeout(() => process.exit(0), 50);
         return [data, [data.buffer]];
       });
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     const data = Buffer.from('foo');
     const result = await thread.call('job', [data], [data.buffer]);
@@ -519,7 +519,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
         setTimeout(() => process.exit(0), 50);
         return data;
       });
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     const date = new Date();
     const data = {
@@ -648,7 +648,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       const {parent, workerData} = module.require('bthreads');
 
       await parent.call('blob', [workerData]);
-    }, { header: URL, workerData: blob });
+    }, { bootstrap: URL, workerData: blob });
 
     const ret = await new Promise(cb => thread.hook('blob', cb));
 
@@ -666,7 +666,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     const thread = new threads.Thread(async () => {
       const {parent, workerData} = module.require('bthreads');
       parent.send(workerData);
-    }, { header: URL, workerData: blob });
+    }, { bootstrap: URL, workerData: blob });
 
     const ret = await thread.read();
 
@@ -691,7 +691,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       console.log(_.VERSION);
 
       process.exit(0);
-    }, { header: URL, stdout: true });
+    }, { bootstrap: URL, stdout: true });
 
     // Test stdout while we're at it.
     thread.stdout.setEncoding('utf8');
@@ -711,7 +711,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
           return 'hello';
         });
       });
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     const {port1, port2} = new threads.Channel();
 
@@ -751,7 +751,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       parent.hook('close', async () => {
         await thread.close();
       });
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     const {port1, port2} = new threads.Channel();
 
@@ -844,7 +844,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       threads.parent.hook('job', () => {
         throw new Error('foobar');
       });
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     if (!assert.rejects) {
       try {
@@ -867,7 +867,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       setImmediate(() => {
         throw new Error('foobar');
       });
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     let err = null;
 
@@ -894,7 +894,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
           reject(new Error('foobar'));
         });
       });
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     let err = null;
 
@@ -997,7 +997,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
           else
             parent.close();
         });
-      }, { header: URL, workerData: name });
+      }, { bootstrap: URL, workerData: name });
 
       let closed = false;
 
@@ -1021,7 +1021,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       assert.strictEqual(parent.closed, false);
 
       parent.send(await parent.read());
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     assert.strictEqual(thread.online, false);
     assert.strictEqual(thread.closed, false);
@@ -1052,7 +1052,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       assert.strictEqual(parent.closed, false);
 
       parent.hook('job', () => 'foobar');
-    }, { header: URL });
+    }, { bootstrap: URL });
 
     await pool.open();
 

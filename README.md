@@ -83,12 +83,12 @@ Caveats for the `web_workers` backend:
 
 - `options.workerData` possibly has a limited size depending on the browser
   (the maximum size of `options.name`).
-- `options.eval` requires header or "prelude" file for code. This is
-  essentially a bundle which provides all the necessary browserify modules
-  (such that `require('path')` works, for example), as well as bthreads itself.
-  By default, bthreads will pull in its own [bundle] as an [npm
-  package][bthreads-bundle] from [unpkg.com]. If using the default header file,
-  you must have `blob:` and/or `data:` set as a [Content-Security-Policy]
+- `options.eval` requires a "bootstrap" file for code. This is essentially a
+  bundle which provides all the necessary browserify modules (such that
+  `require('path')` works, for example), as well as bthreads itself.  By
+  default, bthreads will pull in its own [bundle] as an [npm
+  package][bthreads-bundle] from [unpkg.com]. If using the default bootstrap
+  file, you must have `blob:` and/or `data:` set as a [Content-Security-Policy]
   source (see [content-security-policy.com] for a guide). When using a bundler,
   note that the bundler will _not_ be able to compile the eval'd code. This
   means that `require` will have limited usability (restricted to only core
@@ -454,9 +454,9 @@ nearly identical to the [worker_threads] worker options with some differences:
   browser backend (see [web_workers]). Note that `options.type = 'module'` will
   not work with the `polyfill` backend. If a file extension is `.mjs`,
   `options.type` is automatically set to `module` for consistency with node.js.
-- `options.header` is a valid option in the browser when used in combination
+- `options.bootstrap` is a valid option in the browser when used in combination
   with `options.eval`. Its value should be the URL of a compiled [bundle] file.
-  For security, it's recommended to serve your own header file.
+  For security, it's recommended to serve your own bootstrap file.
 - The `Pool` class accepts `size` option. This allows you to manually set the
   pool size instead of determining it by the number of CPU cores.
 - `options.dirname` allows you to set the `__dirname` of an eval'd module.
