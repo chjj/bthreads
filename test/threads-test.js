@@ -866,6 +866,12 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     await thread.close();
   });
 
+  // Fixed in 10.7.0:
+  // https://github.com/nodejs/node/commit/b0943a655e
+  // https://github.com/nodejs/node/commit/25fef3d8d4
+  const exceptionCode =
+    threads.backend === 'worker_threads' && version < 0x0a0700 ? 0 : 1;
+
   it('should propagate exception', async (ctx) => {
     if (threads.backend === 'polyfill')
       ctx.skip();
@@ -885,7 +891,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     }
 
     assert.strictEqual(err && err.message, 'foobar');
-    assert.strictEqual(await thread.wait(), 1);
+    assert.strictEqual(await thread.wait(), exceptionCode);
   });
 
   it('should propagate rejection', async (ctx) => {
@@ -912,7 +918,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     }
 
     assert.strictEqual(err && err.message, 'foobar');
-    assert.strictEqual(await thread.wait(), 1);
+    assert.strictEqual(await thread.wait(), exceptionCode);
   });
 
   it('should set module dirname', async (ctx) => {
