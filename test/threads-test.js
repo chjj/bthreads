@@ -6,9 +6,10 @@
 Buffer.poolSize = 1;
 
 const assert = require('assert');
-const {join} = require('path');
+const {basename, join} = require('path');
 const encoding = require('../lib/internal/encoding');
 const threads = require('../');
+const cwd = process.cwd();
 const location = global.location || {};
 const parts = process.version.split(/[^\d]/);
 const version = (0
@@ -19,6 +20,9 @@ const version = (0
 const PROTO = location.protocol || 'http:';
 const PORT = (location.port >>> 0) || 80;
 const URL = `${PROTO}//localhost:${PORT}/eval.js`;
+
+if (!process.browser && basename(cwd) !== 'bthreads')
+  throw new Error('Invalid working directory.');
 
 const vector = (index) => {
   let n = index.toString(10);
