@@ -1006,4 +1006,52 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       assert(closed);
     });
   }
+
+  it('should handle methods and properties for thread', async () => {
+    const thread = new threads.Thread(async () => {
+      const assert = module.require('assert');
+      const {parent} = module.require('bthreads');
+
+      assert.strictEqual(parent.closed, false);
+
+      parent.send(await parent.read());
+    }, { header: URL });
+
+    assert.strictEqual(thread.online, false);
+    assert.strictEqual(thread.closed, false);
+
+    await thread.open();
+
+    assert.strictEqual(thread.online, true);
+    assert.strictEqual(thread.closed, false);
+
+    thread.send('foobar');
+
+    assert.strictEqual(await thread.read(), 'foobar');
+
+    assert.strictEqual(thread.online, true);
+    assert.strictEqual(thread.closed, false);
+
+    await thread.close();
+
+    assert.strictEqual(thread.online, false);
+    assert.strictEqual(thread.closed, true);
+  });
+
+  it('should handle methods and properties for pool', async () => {
+    const pool = new threads.Pool(() => {
+      const assert = module.require('assert');
+      const {parent} = module.require('bthreads');
+
+      assert.strictEqual(parent.closed, false);
+
+      parent.hook('job', () => 'foobar');
+    }, { header: URL });
+
+    await pool.open();
+
+    assert.strictEqual(await pool.call('job'), 'foobar');
+
+    await pool.close();
+  });
 });

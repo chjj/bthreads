@@ -68,7 +68,7 @@ there are also more explicit entry points:
 
 Some caveats for the `child_process` backend:
 
-- The transfer list only works for MessagePorts. Array buffers won't _actually_
+- The transfer list only works for MessagePorts. ArrayBuffers won't _actually_
   be transferred.
 - `options.workerData` probably has a limited size depending on platform (the
   maximum size of an environment variable).
@@ -103,24 +103,23 @@ Caveats for the `web_workers` backend:
 Caveats for the `polyfill` backend:
 
 - Code will not actually run in a separate context (obviously).
-- `importScripts` will perform a synchronous XMLHttpRequest and potentially
+- `importScripts` will perform a synchronous `XMLHttpRequest` and potentially
   freeze the UI. Additionally, XHR is bound to certain cross-origin rules that
   `importScripts` is not.
-- Similarly, worker scripts are also spawned using XHR. The same cross-origin
-  limitations apply.
+- Similarly, worker scripts are also spawned using XHR. This means they are
+  restricted by the `connect-src` `Content-Security-Policy` directive
+  specifically (instead of perhaps the `worker-src` directive).
 - `SharedArrayBuffer` cannot be sent as `workerData`.
 - `Blob` and `File` may not be able to be cloned when sent as `workerData`
-  depending on your `Content-Security-Policy`.
+  depending on your `Content-Security-Policy` (the `blob:` source must be
+  present for the `connect-src` directive).
 - `FileList` will emerge on the other side as an `Array` rather than a
   `FileList` when sent as `workerData`.
 - All transferred `ArrayBuffer`s behave as if they were `SharedArrayBuffer`s
   (i.e. they're not neutered). Be careful!
 - Uncaught errors will not be caught and emitted as `error` events on worker
   objects.
-- The `console` object will not be linked to `process.{stdout,stderr}` when
-  inside a worker (note: this is fixable if browserify and webpack were to
-  slightly modify their `console` module). However, `threads.console` will work
-  normally.
+- Worker scripts cannot be executed as ES modules.
 
 Caveats for all of the above:
 
@@ -331,6 +330,8 @@ const worker = new threads.Worker(code, { eval: true });
   - `new Socket()` - Not meant to be called directly.
 - Properties
   - `Socket#events` (read only) - A reference to the bind `EventEmitter`.
+  - `Socket#closed` (read only) - A boolean representing whether the socket is
+    closed.
 - Methods
   - `Socket#bind(name, handler)` - Bind remote event.
   - `Socket#unbind(name, handler)` - Unbind remote event.
@@ -338,6 +339,7 @@ const worker = new threads.Worker(code, { eval: true });
   - `Socket#unhook(name)` - Remove hook handler.
   - `Socket#send(msg, [transferList])` - Send message, will be emitted as a
     `message` event on the other side.
+  - `Socket#read()` (async) - Wait for and read the next `message` event.
   - `Socket#fire(name, args, [transferList])` - Fire bind event.
   - `Socket#call(name, args, [transferList], [timeout])` (async) - Call remote
     hook.
@@ -356,12 +358,15 @@ const worker = new threads.Worker(code, { eval: true });
   - `new Thread(code, [options])` - Instantiate thread with code.
   - `new Thread(function, [options])` - Instantiate thread with function.
 - Properties
+  - `Thread#online` (read only) - A boolean representing whether the thread is
+    online.
   - `Thread#stdin` (read only) - A writable stream representing stdin (only
     present if `options.stdin` was passed).
   - `Thread#stdout` (read only) - A readable stream representing stdout.
   - `Thread#stderr` (read only) - A readable stream representing stderr.
   - `Thread#threadId` (read only) - An integer representing the thread ID.
 - Methods
+  - `Thread#open()` (async) - Wait for the `online` event to be emitted.
   - `Thread#close()` (async) - Terminate the thread and wait for `exit` event
     but also listen for errors and reject the promise if any occur (in other
     words, a better `async` version of `Thread#terminate`).
@@ -378,9 +383,9 @@ const worker = new threads.Worker(code, { eval: true });
 - Methods
   - `Port#start()` - Open and bind port (usually automatic).
   - `Port#close()` (async) - Close the port and wait for `close` event, but
-    also listen for errors and reject the promise if any occur.
   - `Port#wait()` (async) - Wait for thread to exit, but do not invoke
     `close()`.
+    also listen for errors and reject the promise if any occur.
 - Events
   - `Port@close()` - Emitted on port close.
 
@@ -406,9 +411,11 @@ const worker = new threads.Worker(code, { eval: true });
   - `Pool#events` (read only) - A reference to the bind `EventEmitter`.
   - `Pool#threads` (read only) - A `Set` containing all spawned threads.
 - Methods
-  - `Pool#open()` - Open and populate the pool with `this.size` threads
+  - `Pool#open()` (async) - Populate and wait until all threads are online
     (otherwise threads will be lazily spawned).
   - `Pool#close()` (async) - Close all threads in pool, reject on errors.
+  - `Pool#populate()` - Populate the pool with `this.size` threads (otherwise
+    threads will be lazily spawned).
   - `Pool#next()` - Return the next thread in queue (this may spawn a new
     thread).
   - `Pool#bind(name, handler)` - Bind remote event for all threads.
