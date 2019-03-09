@@ -795,7 +795,15 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await wait(worker), 0);
   });
 
-  it('should test node flags', async () => {
+  it('should test node flags', async (ctx) => {
+    if (threads.browser)
+      ctx.skip();
+
+    // Added in 11.8.0.
+    // https://github.com/nodejs/node/pull/25467
+    if (threads.backend === 'worker_threads' && version < 0x0b0800)
+      ctx.skip();
+
     const thread = new threads.Worker(vector(18), {
       execArgv: ['--expose-internals']
     });
