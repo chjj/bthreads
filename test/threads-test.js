@@ -795,6 +795,14 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await wait(worker), 0);
   });
 
+  it('should test node flags', async () => {
+    const thread = new threads.Worker(vector(18), {
+      execArgv: ['--expose-internals']
+    });
+
+    await wait(thread);
+  });
+
   it('should propagate stdout through multiple layers', async (ctx) => {
     if (threads.browser)
       ctx.skip();
