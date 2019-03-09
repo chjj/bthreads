@@ -275,13 +275,13 @@ const code = `(${myWorker})();`;
 const worker = new threads.Worker(code, { eval: true });
 ```
 
-The solution is to access `global.require` instead of `require`.
+The solution is to access `module.require` instead of `require`.
 
 ``` js
 const threads = require('bthreads');
 
 function myWorker() {
-  const threads = global.require('bthreads');
+  const threads = module.require('bthreads');
 
   threads.parentPort.postMessage('foo');
 }
