@@ -853,12 +853,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       });
     }, { header: URL });
 
-    let code = 0;
     let err = null;
-
-    thread.on('exit', (code_) => {
-      code = code_;
-    });
 
     try {
       await thread.wait();
@@ -866,8 +861,8 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       err = e;
     }
 
-    assert.strictEqual(code, 0);
     assert.strictEqual(err && err.message, 'foobar');
+    assert.strictEqual(await thread.wait(), 1);
   });
 
   it('should propagate rejection', async (ctx) => {
@@ -885,12 +880,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       });
     }, { header: URL });
 
-    let code = 0;
     let err = null;
-
-    thread.on('exit', (code_) => {
-      code = code_;
-    });
 
     try {
       await thread.wait();
@@ -898,8 +888,8 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       err = e;
     }
 
-    assert.strictEqual(code, 0);
     assert.strictEqual(err && err.message, 'foobar');
+    assert.strictEqual(await thread.wait(), 1);
   });
 
   it('should set module dirname', async (ctx) => {
