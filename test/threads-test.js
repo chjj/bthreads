@@ -668,7 +668,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       parent.send(workerData);
     }, { header: URL, workerData: blob });
 
-    const ret = await read(thread);
+    const ret = await thread.read();
 
     assert.strictEqual(await readBlob(ret), 'foobar');
 
@@ -910,7 +910,7 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       ]);
     }, { dirname: __dirname });
 
-    const msg = await read(thread);
+    const msg = await thread.read();
 
     assert(Array.isArray(msg));
     assert.strictEqual(msg[0], '/');
@@ -945,14 +945,14 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     await timeout(50);
 
-    text.push(await read(port2));
+    text.push(await port2.read());
 
     port2.removeAllListeners('message');
     port1.send('world');
 
     await timeout(50);
 
-    text.push(await read(port2));
+    text.push(await port2.read());
 
     port2.removeAllListeners('message');
 
