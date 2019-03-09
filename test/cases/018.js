@@ -1,3 +1,3 @@
 'use strict';
 
-require('internal/assert');
+require('internal/util');
