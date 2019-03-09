@@ -75,6 +75,8 @@ Some caveats for the `child_process` backend:
 - `SharedArrayBuffer` does not work and will throw an error if sent.
 - In order to avoid memory leaks, MessagePorts (all aside from the parentPort)
   do not hold event loop references (`ref()` and `unref()` are noops).
+- Exotic objects like `Proxy`s can be serialized and cloned as they cannot be
+  detected from regular javascript.
 
 Caveats for the `web_workers` backend:
 
@@ -120,6 +122,8 @@ Caveats for the `polyfill` backend:
 - Uncaught errors will not be caught and emitted as `error` events on worker
   objects.
 - Worker scripts cannot be executed as ES modules.
+- Exotic objects like `Proxy`s can be serialized and cloned as they cannot be
+  detected from regular javascript.
 
 Caveats for all of the above:
 
