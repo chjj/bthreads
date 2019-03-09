@@ -16,7 +16,7 @@
   "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
   "main": "./lib/bthreads",
   "scripts": {
-    "lint": "eslint bench/ lib/ test/ || exit 0",
+    "lint": "eslint *.js bench/ lib/ test/ || exit 0",
     "test": "BTHREADS_BACKEND=polyfill bmocha -H && bmocha -H && BTHREADS_BACKEND=child_process bmocha && bmocha"
   },
   "dependencies": {

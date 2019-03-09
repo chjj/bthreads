@@ -12,8 +12,8 @@ const version = (0
   + (parts[2] & 0xff) * 0x00100
   + (parts[3] & 0xff) * 0x00001);
 
-// Current considering 11.11.0 stable due
-// to this change getting in:
+// Currently considering 11.11.0 stable
+// due to this particular change getting in:
 // https://github.com/nodejs/node/commit/a9a2c5869c
 if (version >= 0x0b0b00)
   module.exports = require('./lib/threads');
