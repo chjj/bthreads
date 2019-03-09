@@ -374,7 +374,8 @@ describe(`Threads (${threads.backend})`, (ctx) => {
   it('should transfer buffer', async () => {
     const worker = new threads.Worker(vector(14));
     const job = wait(worker);
-    const data = Buffer.from('foobar');
+    const data = Buffer.alloc(6);
+    data.write('foobar');
 
     worker.postMessage(data, [data.buffer]);
 
@@ -497,7 +498,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       });
     }, { bootstrap: URL });
 
-    const data = Buffer.from('foo');
+    const data = Buffer.alloc(3);
+    data.write('foo');
+
     const result = await thread.call('job', [data], [data.buffer]);
 
     if (threads.backend === 'web_workers'
