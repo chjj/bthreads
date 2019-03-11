@@ -1,6 +1,6 @@
 {
   "name": "bthreads",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "worker threads for javascript",
   "keywords": [
     "threads",
@@ -20,10 +20,10 @@
     "test": "bmocha -H -e BTHREADS_BACKEND=polyfill && bmocha -H && bmocha -e BTHREADS_BACKEND=child_process && bmocha"
   },
   "dependencies": {
-    "bufio": "~1.0.4"
+    "bufio": "~1.0.5"
   },
   "devDependencies": {
-    "bmocha": "^1.0.0"
+    "bmocha": "^1.5.0"
   },
   "engines": {
     "node": ">=8.0.0"
