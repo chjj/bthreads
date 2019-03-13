@@ -29,6 +29,7 @@
     "node": ">=8.0.0"
   },
   "browser": {
+    "os": false,
     "./lib/bthreads": "./lib/browser/index.js",
     "./process": "./lib/browser/index.js",
     "./stable": "./lib/browser/index.js",
