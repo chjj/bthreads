@@ -1074,4 +1074,44 @@ describe(`Threads (${threads.backend})`, (ctx) => {
 
     await pool.close();
   });
+
+  it('should die on resource limit excess', async (ctx) => {
+    if (threads.backend !== 'child_process')
+      ctx.skip();
+
+    const func = () => setInterval(() => {}, 1000);
+
+    const worker = new threads.Worker(`(${func})();`, {
+      eval: true,
+      resourceLimits: {
+        maxOldSpaceSizeMb: 2
+      }
+    });
+
+    const err = await waitFor(worker, 'error');
+
+    assert(err);
+    assert.strictEqual(err.code, 'ERR_WORKER_OUT_OF_MEMORY');
+    assert.strictEqual(await wait(worker), 1);
+  });
+
+  it('should clean reports', (ctx) => {
+    // v8 writes files like "report.20190313.143017.5753.001.json"
+    // when it dies from an oom.
+    if (threads.backend !== 'child_process')
+      ctx.skip();
+
+    const fs = require('fs');
+    const dir = join(__dirname, '..');
+
+    for (const name of fs.readdirSync(dir)) {
+      if (!name.endsWith('.json'))
+        continue;
+
+      if (!name.startsWith('report.'))
+        continue;
+
+      fs.unlinkSync(join(dir, name));
+    }
+  });
 });
