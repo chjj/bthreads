@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 /* global register, BigInt, Blob, FileReader */
 
 'use strict';
@@ -106,8 +107,8 @@ if (process.browser) {
   register('/test/cases/013.js', [__dirname, './cases/013.js']);
 }
 
-describe(`Threads (${threads.backend})`, (ctx) => {
-  ctx.timeout(5000);
+describe(`Threads (${threads.backend})`, function() {
+  this.timeout(5000);
 
   it('should encode and decode', () => {
     const arr = new Float32Array([1, 2]);
@@ -184,9 +185,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await job, 0);
   });
 
-  it('should not hang if there is no input', async (ctx) => {
+  it('should not hang if there is no input', async () => {
     if (threads.browser)
-      ctx.skip();
+      this.skip();
 
     const worker = new threads.Worker(vector(2), {
       stdin: true
@@ -645,9 +646,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await thread.wait(), 0);
   });
 
-  it('should transfer blob to thread', async (ctx) => {
+  it('should transfer blob to thread', async () => {
     if (!threads.browser)
-      ctx.skip();
+      this.skip();
 
     const blob = new Blob(['foobar'], { type: 'text/plain' });
 
@@ -664,9 +665,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     await thread.close();
   });
 
-  it('should transfer blob to thread (2)', async (ctx) => {
+  it('should transfer blob to thread (2)', async () => {
     if (!threads.browser)
-      ctx.skip();
+      this.skip();
 
     const blob = new Blob(['foobar'], { type: 'text/plain' });
 
@@ -682,9 +683,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     await thread.close();
   });
 
-  it('should import scripts', async (ctx) => {
+  it('should import scripts', async () => {
     if (!threads.browser)
-      ctx.skip();
+      this.skip();
 
     const thread = new threads.Thread(() => {
       const assert = module.require('assert');
@@ -773,18 +774,18 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     await thread.close();
   });
 
-  it('should close child', async (ctx) => {
+  it('should close child', async () => {
     if (threads.browser)
-      ctx.skip();
+      this.skip();
 
     const worker = new threads.Worker(vector(16));
 
     assert.strictEqual(await wait(worker), 0);
   });
 
-  it('should bind console without require', async (ctx) => {
+  it('should bind console without require', async () => {
     if (threads.browser)
-      ctx.skip();
+      this.skip();
 
     const worker = new threads.Worker(vector(17), {
       stdout: true
@@ -802,14 +803,14 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await wait(worker), 0);
   });
 
-  it('should test node flags', async (ctx) => {
+  it('should test node flags', async () => {
     if (threads.browser)
-      ctx.skip();
+      this.skip();
 
     // Added in 11.8.0.
     // https://github.com/nodejs/node/pull/25467
     if (threads.backend === 'worker_threads' && version < 0x0b0800)
-      ctx.skip();
+      this.skip();
 
     const thread = new threads.Worker(vector(18), {
       execArgv: ['--expose-internals']
@@ -818,9 +819,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     await wait(thread);
   });
 
-  it('should propagate stdout through multiple layers', async (ctx) => {
+  it('should propagate stdout through multiple layers', async () => {
     if (threads.browser)
-      ctx.skip();
+      this.skip();
 
     const thread = new threads.Thread(() => {
       const threads = module.require('./');
@@ -872,9 +873,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
   const exceptionCode =
     threads.backend === 'worker_threads' && version < 0x0a0700 ? 0 : 1;
 
-  it('should propagate exception', async (ctx) => {
+  it('should propagate exception', async () => {
     if (threads.backend === 'polyfill')
-      ctx.skip();
+      this.skip();
 
     const thread = new threads.Thread(() => {
       setImmediate(() => {
@@ -894,9 +895,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await thread.wait(), exceptionCode);
   });
 
-  it('should propagate rejection', async (ctx) => {
+  it('should propagate rejection', async () => {
     if (threads.backend === 'polyfill')
-      ctx.skip();
+      this.skip();
 
     const thread = new threads.Thread(() => {
       // Need this for `worker_threads` backend.
@@ -921,9 +922,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await thread.wait(), exceptionCode);
   });
 
-  it('should set module dirname', async (ctx) => {
+  it('should set module dirname', async () => {
     if (threads.browser)
-      ctx.skip();
+      this.skip();
 
     process.chdir('/');
 
@@ -990,10 +991,10 @@ describe(`Threads (${threads.backend})`, (ctx) => {
   });
 
   for (const name of ['port-close', 'no-port-close']) {
-    it(`should emit close remote port (${name})`, async (ctx) => {
+    it(`should emit close remote port (${name})`, async () => {
       // Browser backend doesn't track all ports yet.
       if (name === 'no-port-close' && threads.browser)
-        ctx.skip();
+        this.skip();
 
       const {port1, port2} = new threads.Channel();
 
@@ -1075,9 +1076,9 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     await pool.close();
   });
 
-  it('should die on resource limit excess', async (ctx) => {
+  it('should die on resource limit excess', async () => {
     if (threads.backend !== 'child_process')
-      ctx.skip();
+      this.skip();
 
     const func = () => setInterval(() => {}, 1000);
 
@@ -1095,11 +1096,11 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     assert.strictEqual(await wait(worker), 1);
   });
 
-  it('should clean reports', (ctx) => {
+  it('should clean reports', () => {
     // v8 writes files like "report.20190313.143017.5753.001.json"
     // when it dies from an oom.
     if (threads.backend !== 'child_process')
-      ctx.skip();
+      this.skip();
 
     const fs = require('fs');
     const dir = join(__dirname, '..');
@@ -1115,12 +1116,12 @@ describe(`Threads (${threads.backend})`, (ctx) => {
     }
   });
 
-  it('should not clone proxy', async (ctx) => {
+  it('should not clone proxy', async () => {
     if (threads.browser)
-      ctx.skip();
+      this.skip();
 
     if (threads.backend === 'child_process' && version < 0x0a0000)
-      ctx.skip();
+      this.skip();
 
     const proxy = new Proxy({}, {});
 
