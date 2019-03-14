@@ -131,7 +131,7 @@ Caveats for all of the above:
 - For a number of reasons, bthreads has to walk the objects you pass in to
   send. Note that the cloning function may get confused if you attempt to send
   the raw prototype of a built-in object (for example
-  `worker.postMessage(Array.prototype)`).
+  `worker.postMessage(Buffer.prototype)`).
 
 Finally, caveats for the `worker_threads` backend:
 
