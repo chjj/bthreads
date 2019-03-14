@@ -1114,4 +1114,31 @@ describe(`Threads (${threads.backend})`, (ctx) => {
       fs.unlinkSync(join(dir, name));
     }
   });
+
+  it('should not clone proxy', async (ctx) => {
+    if (threads.browser)
+      ctx.skip();
+
+    if (threads.backend === 'child_process' && version < 0x0a0000)
+      ctx.skip();
+
+    const proxy = new Proxy({}, {});
+
+    {
+      const {port1} = new threads.MessageChannel();
+      assert.throws(() => port1.postMessage(proxy), /could not be cloned/);
+    }
+
+    {
+      const {port1} = new threads.Channel();
+      assert.throws(() => port1.send(proxy), /could not be cloned/);
+    }
+
+    const func = () => setInterval(() => {}, 1000);
+    const worker = new threads.Worker(`(${func})();`, { eval: true });
+
+    assert.throws(() => worker.postMessage(proxy), /could not be cloned/);
+
+    assert.strictEqual(await exit(worker), 1);
+  });
 });

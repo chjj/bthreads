@@ -76,8 +76,8 @@ Some caveats for the `child_process` backend:
 - `SharedArrayBuffer` does not work and will throw an error if sent.
 - In order to avoid memory leaks, MessagePorts (all aside from the parentPort)
   do not hold event loop references (`ref()` and `unref()` are noops).
-- Exotic objects like `Proxy`s can be serialized and cloned as they cannot be
-  detected from regular javascript.
+- Prior to node 10, objects like `Proxy`s can be serialized and cloned as they
+  cannot be detected from regular javascript.
 
 Caveats for the `web_workers` backend:
 

@@ -29,8 +29,9 @@
     "node": ">=8.0.0"
   },
   "browser": {
-    "os": false,
     "./lib/bthreads": "./lib/browser/index.js",
+    "./lib/internal/is-proxy": "./lib/internal/is-proxy-browser.js",
+    "./lib/internal/os": "./lib/internal/os-browser.js",
     "./process": "./lib/browser/index.js",
     "./stable": "./lib/browser/index.js",
     "./threads": "./lib/browser/index.js"
