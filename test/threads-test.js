@@ -1,6 +1,4 @@
-/* eslint-env mocha */
-/* eslint prefer-arrow-callback: "off" */
-/* global register, BigInt, Blob, FileReader */
+/* global Blob, FileReader */
 
 'use strict';
 
