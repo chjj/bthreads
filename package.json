@@ -1,6 +1,6 @@
 {
   "name": "bthreads",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "worker threads for javascript",
   "keywords": [
     "threads",
