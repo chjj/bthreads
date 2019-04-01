@@ -78,6 +78,7 @@ Some caveats for the `child_process` backend:
   do not hold event loop references (`ref()` and `unref()` are noops).
 - Prior to node 10, objects like `Proxy`s can be serialized and cloned as they
   cannot be detected from regular javascript.
+- `SHARE_ENV` does not work and will throw an error if passed.
 
 Caveats for the `web_workers` backend:
 
@@ -102,6 +103,7 @@ Caveats for the `web_workers` backend:
   depending on your `Content-Security-Policy`.
 - `FileList` will emerge on the other side as an `Array` rather than a
   `FileList` when sent as `workerData`.
+- `SHARE_ENV` does not work and will throw an error if passed.
 
 Caveats for the `polyfill` backend:
 
