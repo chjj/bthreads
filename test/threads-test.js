@@ -1138,6 +1138,9 @@ describe(`Threads (${threads.backend})`, function() {
 
     assert.throws(() => worker.postMessage(proxy), /could not be cloned/);
 
-    assert.strictEqual(await exit(worker), 1);
+    if (threads.backend === 'worker_threads' && version >= 0x0a0d00)
+      assert.strictEqual(await exit(worker), 0);
+    else
+      assert.strictEqual(await exit(worker), 1);
   });
 });
