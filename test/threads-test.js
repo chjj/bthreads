@@ -25,6 +25,8 @@ const HAS_MODULES = version >= 0x0c0000
 if (!process.browser && basename(cwd) !== 'bthreads')
   throw new Error('Invalid working directory.');
 
+threads.Buffer = Buffer;
+
 const vector = (index) => {
   let n = index.toString(10);
 
@@ -176,6 +178,9 @@ describe(`Threads (${threads.backend})`, function() {
   });
 
   it('should have stdin', async () => {
+    if (threads.browser)
+      this.skip();
+
     const worker = new threads.Worker(vector(2), {
       stdin: true
     });
@@ -207,6 +212,9 @@ describe(`Threads (${threads.backend})`, function() {
   });
 
   it('should have stdout', async () => {
+    if (threads.browser)
+      this.skip();
+
     const worker = new threads.Worker(vector(3), {
       workerData: 'foo',
       stdout: true
@@ -226,6 +234,9 @@ describe(`Threads (${threads.backend})`, function() {
   });
 
   it('should have stderr', async () => {
+    if (threads.browser)
+      this.skip();
+
     const worker = new threads.Worker(vector(4), {
       workerData: 'foo',
       stderr: true
@@ -245,6 +256,9 @@ describe(`Threads (${threads.backend})`, function() {
   });
 
   it('should have console.log', async () => {
+    if (threads.browser)
+      this.skip();
+
     const worker = new threads.Worker(vector(5), {
       workerData: 'foo',
       stdout: true
@@ -264,6 +278,9 @@ describe(`Threads (${threads.backend})`, function() {
   });
 
   it('should have console.error', async () => {
+    if (threads.browser)
+      this.skip();
+
     const worker = new threads.Worker(vector(6), {
       workerData: 'foo',
       stderr: true
@@ -294,6 +311,9 @@ describe(`Threads (${threads.backend})`, function() {
   });
 
   it('should hang on input', async () => {
+    if (threads.browser)
+      this.skip();
+
     const worker = new threads.Worker(vector(8), {
       stdin: true
     });
@@ -653,12 +673,18 @@ describe(`Threads (${threads.backend})`, function() {
       this.skip();
 
     const blob = new Blob(['foobar'], { type: 'text/plain' });
+    const workerData = encoding.stringify(blob);
 
     const thread = new threads.Thread(async () => {
+      const assert = module.require('assert');
       const {parent, workerData} = module.require('../');
+      const encoding = module.require('../lib/internal/encoding');
+      const blob = encoding.parse(workerData);
 
-      await parent.call('blob', [workerData]);
-    }, { bootstrap: URL, workerData: blob });
+      assert(blob instanceof Blob);
+
+      await parent.call('blob', [blob]);
+    }, { bootstrap: URL, workerData });
 
     const ret = await new Promise(cb => thread.hook('blob', cb));
 
@@ -672,11 +698,18 @@ describe(`Threads (${threads.backend})`, function() {
       this.skip();
 
     const blob = new Blob(['foobar'], { type: 'text/plain' });
+    const workerData = encoding.stringify(blob);
 
     const thread = new threads.Thread(async () => {
+      const assert = module.require('assert');
       const {parent, workerData} = module.require('../');
-      parent.send(workerData);
-    }, { bootstrap: URL, workerData: blob });
+      const encoding = module.require('../lib/internal/encoding');
+      const blob = encoding.parse(workerData);
+
+      assert(blob instanceof Blob);
+
+      parent.send(blob);
+    }, { bootstrap: URL, workerData });
 
     const ret = await thread.read();
 
@@ -692,23 +725,21 @@ describe(`Threads (${threads.backend})`, function() {
     const thread = new threads.Thread(() => {
       const assert = module.require('assert');
       const threads = module.require('../');
+      const {parent} = threads;
 
       const _ = threads.require(
         'https://unpkg.com/underscore@1.9.1/underscore.js');
 
       assert.strictEqual(_.VERSION, '1.9.1');
 
-      console.log(_.VERSION);
+      parent.send(_.VERSION);
 
       process.exit(0);
-    }, { bootstrap: URL, stdout: true });
+    }, { bootstrap: URL });
 
-    // Test stdout while we're at it.
-    thread.stdout.setEncoding('utf8');
+    const data = await thread.read();
 
-    const data = await waitFor(thread.stdout, 'data');
-
-    assert.strictEqual(data, '1.9.1\n');
+    assert.strictEqual(data, '1.9.1');
     assert.strictEqual(await thread.wait(), 0);
   });
 
