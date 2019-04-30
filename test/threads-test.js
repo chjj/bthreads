@@ -1152,7 +1152,7 @@ describe(`Threads (${threads.backend})`, function() {
       this.skip();
 
     const thread = new threads.Thread(`
-      importScripts("${PROTO}//localhost:${PORT}/bthreads");
+      importScripts(new URL("${PROTO}//localhost:${PORT}/bthreads"));
       const threads = bthreads;
       threads.parent.send('foo');
     `, { eval: true, bootstrap: false });
