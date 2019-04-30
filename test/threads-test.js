@@ -144,7 +144,7 @@ describe(`Threads (${threads.backend})`, function() {
     if (process.browser)
       assert(threads.browser);
 
-    assert(typeof threads.source === 'string');
+    assert(threads.base);
   });
 
   it('should create message channel', async () => {
@@ -408,7 +408,6 @@ describe(`Threads (${threads.backend})`, function() {
       assert.strictEqual(path.basename(module.filename), '[worker eval]');
       assert.strictEqual(path.resolve(__dirname), process.cwd());
       assert.strictEqual(__filename, '[worker eval]');
-      assert(!threads.source);
 
       threads.parentPort.postMessage('evaled!');
 
@@ -692,7 +691,7 @@ describe(`Threads (${threads.backend})`, function() {
       const assert = module.require('assert');
       const threads = module.require('./');
 
-      const _ = threads.importScripts(
+      const _ = threads.require(
         'https://unpkg.com/underscore@1.9.1/underscore.js');
 
       assert.strictEqual(_.VERSION, '1.9.1');
@@ -1148,9 +1147,6 @@ describe(`Threads (${threads.backend})`, function() {
   });
 
   it('should eval script (bootstrap=false)', async () => {
-    if (!threads.browser)
-      this.skip();
-
     const thread = new threads.Thread(`
       importScripts(new URL("${PROTO}//localhost:${PORT}/bthreads"));
       const threads = bthreads;
