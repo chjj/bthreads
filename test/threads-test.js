@@ -5,7 +5,7 @@
 Buffer.poolSize = 1;
 
 const assert = require('assert');
-const {basename, join} = require('path');
+const {basename, join, resolve} = require('path');
 const encoding = require('../lib/internal/encoding');
 const threads = require('../');
 const cwd = process.cwd();
@@ -144,7 +144,9 @@ describe(`Threads (${threads.backend})`, function() {
     if (process.browser)
       assert(threads.browser);
 
-    assert(threads.base);
+    assert(threads.baseURL);
+    assert(threads.filename);
+    assert(threads.dirname);
   });
 
   it('should create message channel', async () => {
@@ -494,7 +496,7 @@ describe(`Threads (${threads.backend})`, function() {
   it('should transfer buffer to thread', async () => {
     const thread = new threads.Thread(() => {
       const assert = module.require('assert');
-      const {parent} = module.require('./');
+      const {parent} = module.require('../');
 
       parent.hook('job', (data) => {
         assert(Buffer.isBuffer(data));
@@ -521,7 +523,7 @@ describe(`Threads (${threads.backend})`, function() {
 
   it('should transfer complex data to thread', async () => {
     const thread = new threads.Thread(() => {
-      const {parent} = module.require('./');
+      const {parent} = module.require('../');
 
       parent.hook('job', (data) => {
         setTimeout(() => process.exit(0), 50);
@@ -653,7 +655,7 @@ describe(`Threads (${threads.backend})`, function() {
     const blob = new Blob(['foobar'], { type: 'text/plain' });
 
     const thread = new threads.Thread(async () => {
-      const {parent, workerData} = module.require('./');
+      const {parent, workerData} = module.require('../');
 
       await parent.call('blob', [workerData]);
     }, { bootstrap: URL, workerData: blob });
@@ -672,7 +674,7 @@ describe(`Threads (${threads.backend})`, function() {
     const blob = new Blob(['foobar'], { type: 'text/plain' });
 
     const thread = new threads.Thread(async () => {
-      const {parent, workerData} = module.require('./');
+      const {parent, workerData} = module.require('../');
       parent.send(workerData);
     }, { bootstrap: URL, workerData: blob });
 
@@ -689,7 +691,7 @@ describe(`Threads (${threads.backend})`, function() {
 
     const thread = new threads.Thread(() => {
       const assert = module.require('assert');
-      const threads = module.require('./');
+      const threads = module.require('../');
 
       const _ = threads.require(
         'https://unpkg.com/underscore@1.9.1/underscore.js');
@@ -712,7 +714,7 @@ describe(`Threads (${threads.backend})`, function() {
 
   it('should send port to thread', async () => {
     const thread = new threads.Thread(() => {
-      const {parent} = module.require('./');
+      const {parent} = module.require('../');
 
       parent.hook('port', (port) => {
         port.hook('job', () => {
@@ -735,14 +737,14 @@ describe(`Threads (${threads.backend})`, function() {
     // Double-evaled nested workers with ports
     // sent down two layers. How cool is that?
     const thread = new threads.Thread(() => {
-      const threads = module.require('./');
+      const threads = module.require('../');
       const {parent} = threads;
 
       let thread;
 
       parent.hook('spawn', () => {
         thread = new threads.Thread(() => {
-          const {parent} = module.require('./');
+          const {parent} = module.require('../');
 
           parent.hook('port', (port) => {
             port.hook('job', () => {
@@ -824,13 +826,13 @@ describe(`Threads (${threads.backend})`, function() {
       this.skip();
 
     const thread = new threads.Thread(() => {
-      const threads = module.require('./');
+      const threads = module.require('../');
 
       new threads.Thread(() => {
-        const threads = module.require('./');
+        const threads = module.require('../');
 
         new threads.Thread(() => {
-          const threads = module.require('./');
+          const threads = module.require('../');
 
           new threads.Thread(() => {
             console.log('foobar');
@@ -847,7 +849,7 @@ describe(`Threads (${threads.backend})`, function() {
 
   it('should throw error', async () => {
     const thread = new threads.Thread(() => {
-      const threads = module.require('./');
+      const threads = module.require('../');
 
       threads.parent.hook('job', () => {
         throw new Error('foobar');
@@ -901,7 +903,7 @@ describe(`Threads (${threads.backend})`, function() {
 
     const thread = new threads.Thread(() => {
       // Need this for `worker_threads` backend.
-      module.require('./');
+      module.require('../');
 
       setImmediate(() => {
         new Promise((resolve, reject) => {
@@ -929,20 +931,20 @@ describe(`Threads (${threads.backend})`, function() {
     process.chdir('/');
 
     const thread = new threads.Thread(() => {
-      const {parent} = module.require('../');
+      const {parent} = module.require('./');
       parent.send([
         process.cwd(),
         __dirname,
-        require.resolve('../'),
-        require.resolve('./threads-test.js')
+        require.resolve('./'),
+        require.resolve('./test/threads-test.js')
       ]);
-    }, { dirname: __dirname });
+    }, { dirname: __dirname + '/..' });
 
     const msg = await thread.read();
 
     assert(Array.isArray(msg));
     assert.strictEqual(msg[0], '/');
-    assert.strictEqual(msg[1], __dirname);
+    assert.strictEqual(msg[1], resolve(__dirname + '/..'));
     assert.strictEqual(msg[2], require.resolve('../'));
     assert.strictEqual(msg[3], require.resolve('./threads-test.js'));
 
@@ -999,7 +1001,7 @@ describe(`Threads (${threads.backend})`, function() {
       const {port1, port2} = new threads.Channel();
 
       const thread = new threads.Thread(() => {
-        const threads = module.require('./');
+        const threads = module.require('../');
         const {parent, workerData} = threads;
         const name = workerData;
 
@@ -1031,7 +1033,7 @@ describe(`Threads (${threads.backend})`, function() {
   it('should handle methods and properties for thread', async () => {
     const thread = new threads.Thread(async () => {
       const assert = module.require('assert');
-      const {parent} = module.require('./');
+      const {parent} = module.require('../');
 
       assert.strictEqual(parent.closed, false);
 
@@ -1062,7 +1064,7 @@ describe(`Threads (${threads.backend})`, function() {
   it('should handle methods and properties for pool', async () => {
     const pool = new threads.Pool(() => {
       const assert = module.require('assert');
-      const {parent} = module.require('./');
+      const {parent} = module.require('../');
 
       assert.strictEqual(parent.closed, false);
 
