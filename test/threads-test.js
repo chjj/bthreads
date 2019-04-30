@@ -19,6 +19,8 @@ const version = (0
 const PROTO = location.protocol || 'http:';
 const PORT = (location.port >>> 0) || 80;
 const URL = `${PROTO}//localhost:${PORT}/eval.js`;
+const HAS_MODULES = version >= 0x0c0000
+  || process.execArgv.indexOf('--experimental-modules') !== -1;
 
 if (!process.browser && basename(cwd) !== 'bthreads')
   throw new Error('Invalid working directory.');
@@ -100,6 +102,7 @@ async function timeout(ms) {
 }
 
 if (process.browser) {
+  register('/bthreads', [__dirname, '../lib/bthreads.js']);
   register('/eval.js', [__dirname, '../lib/browser/eval.js']);
   // 012.js calls 013.js. Must be registered here.
   register('/test/cases/013.js', [__dirname, './cases/013.js']);
@@ -403,7 +406,7 @@ describe(`Threads (${threads.backend})`, function() {
       assert(threads.parentPort);
       assert.strictEqual(module.id, '[worker eval]');
       assert.strictEqual(path.basename(module.filename), '[worker eval]');
-      assert.strictEqual(__dirname, '.');
+      assert.strictEqual(path.resolve(__dirname), process.cwd());
       assert.strictEqual(__filename, '[worker eval]');
       assert(!threads.source);
 
@@ -1142,5 +1145,91 @@ describe(`Threads (${threads.backend})`, function() {
       assert.strictEqual(await exit(worker), 0);
     else
       assert.strictEqual(await exit(worker), 1);
+  });
+
+  it('should eval script (bootstrap=false)', async () => {
+    if (!threads.browser)
+      this.skip();
+
+    const thread = new threads.Thread(`
+      importScripts("${PROTO}//localhost:${PORT}/bthreads");
+      const threads = bthreads;
+      threads.parent.send('foo');
+    `, { eval: true, bootstrap: false });
+
+    assert.strictEqual(await thread.read(), 'foo');
+
+    await thread.close();
+  });
+
+  it.skip('should eval module (bootstrap=false)', async () => {
+    if (!threads.browser)
+      this.skip();
+
+    if (threads.backend === 'polyfill')
+      this.skip();
+
+    // Todo: compile as module somehow for testing.
+    const thread = new threads.Thread(`
+      import threads from 'bthreads';
+      threads.parent.send('foo');
+    `, { eval: true, type: 'module' });
+
+    assert.strictEqual(await thread.read(), 'foo');
+
+    await thread.close();
+  });
+
+  it('should eval script (process)', async () => {
+    if (threads.backend !== 'child_process')
+      this.skip();
+
+    if (!HAS_MODULES)
+      this.skip();
+
+    const thread = new threads.Thread(`
+      (async () => {
+        const assert = (await import('assert')).default;
+        const threads1 = (await import('bthreads')).default;
+        const threads2 = (await import('./lib/bthreads.js')).default;
+        assert(threads1 === threads2);
+        threads1.parent.send('foo');
+      })();
+    `, { eval: true });
+
+    assert.strictEqual(await thread.read(), 'foo');
+
+    await thread.close();
+  });
+
+  it('should eval module (process)', async () => {
+    if (threads.backend !== 'child_process')
+      this.skip();
+
+    if (!HAS_MODULES)
+      this.skip();
+
+    const thread = new threads.Thread(`
+      import threads from 'bthreads';
+      threads.parent.send('foo');
+    `, { eval: true, type: 'module' });
+
+    assert.strictEqual(await thread.read(), 'foo');
+
+    await thread.close();
+  });
+
+  it('should execute module (process/threads)', async () => {
+    if (threads.browser)
+      this.skip();
+
+    if (!HAS_MODULES)
+      this.skip();
+
+    const thread = new threads.Thread(vector(19).replace(/\.js$/, '.mjs'));
+
+    assert.strictEqual(await thread.read(), 'foobar');
+
+    await thread.close();
   });
 });
