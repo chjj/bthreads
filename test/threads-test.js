@@ -146,7 +146,7 @@ describe(`Threads (${threads.backend})`, function() {
     if (process.browser)
       assert(threads.browser);
 
-    assert(threads.baseURL);
+    assert(threads.location);
     assert(threads.filename);
     assert(threads.dirname);
   });
@@ -1181,7 +1181,7 @@ describe(`Threads (${threads.backend})`, function() {
 
   it('should eval script (bootstrap=false)', async () => {
     const thread = new threads.Thread(`
-      importScripts(new URL("${PROTO}//localhost:${PORT}/bthreads"));
+      importScripts(new URL('/bthreads', '${PROTO}//localhost:${PORT}'));
       const threads = bthreads;
       threads.parent.send('foo');
     `, { eval: true, bootstrap: false });
@@ -1199,6 +1199,8 @@ describe(`Threads (${threads.backend})`, function() {
       this.skip();
 
     // Todo: compile as module somehow for testing.
+    // Note that chromium also doesn't support esm
+    // workers yet.
     const thread = new threads.Thread(`
       import threads from 'bthreads';
       threads.parent.send('foo');
