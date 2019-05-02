@@ -242,6 +242,32 @@ implicitly required. `bthreads` will set an environment variable called
 previously, allowing you to determine which function to run inside the worker
 thread.
 
+In other words, when the compiler comes across:
+
+``` js
+const thread = new threads.Thread('./foo.js');
+```
+
+`./foo.js` should be included in the bundled and mapped to an ID (in our case,
+we include it in the bundle with an ID of `1`).
+
+Our line becomes:
+
+``` js
+const thread = new threads.Thread('bthreads-worker@1');
+```
+
+The bundle's main entry point should include some initialization code like:
+
+``` js
+executeBthreads();
+
+if (process.env.BTHREADS_WORKER_INLINE)
+  executeWorker(process.env.BTHREADS_WORKER_INLINE);
+else
+  executeMain();
+```
+
 ## importScripts
 
 In the browser, bthreads exposes a more useful version of `importScripts`
