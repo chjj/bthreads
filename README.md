@@ -259,12 +259,12 @@ const thread = new threads.Thread('bthreads-worker@1');
 The bundle's main entry point should include some initialization code like:
 
 ``` js
-executeBthreads();
+requireBthreads();
 
 if (process.env.BTHREADS_WORKER_INLINE)
-  executeWorker(process.env.BTHREADS_WORKER_INLINE);
+  requireWorker(process.env.BTHREADS_WORKER_INLINE);
 else
-  executeMain();
+  requireMain();
 ```
 
 ## importScripts
