@@ -214,17 +214,16 @@ if (threads.isMainThread) {
 ## Writing code for node and the browser
 
 One of the remarkable features of bthreads is that it allows for static
-analysis when bundling. The `threads.Pool` and `threads.Thread` objects
-resolve their `filename` argument as if it was a `require()` from the calling
-file.
+analysis when bundling. The `threads.Pool` and `threads.Thread` objects resolve
+their `filename` argument as if it was a `require()` from the calling file.
 
 ``` js
-const thread = new threads.Thread('./foo.js');
+const thread = new threads.Thread('./worker.js');
 ```
 
-The above line will resolve to `${__dirname}/foo.js` in node.js and
-`${window.location}/foo.js` in the browser. In node.js, it is _not_ relative to
-the current working directory! We accomplish this through various forms of
+The above line will resolve to `${__dirname}/worker.js` in node.js and
+`${window.location}/worker.js` in the browser. In node.js, it is _not_ relative
+to the current working directory! We accomplish this through various forms of
 sorcery.
 
 Why does this matter? Because it allows for browserify and/or webpack to do
@@ -235,21 +234,21 @@ point.
 
 ### How this works behind the scenes (for plugin implementers)
 
-Statically analyzing the line above, the compiler should replace `'./foo.js'`
-with `'bthreads-worker@[id]'`. When initializing the code, `bthreads` should be
-implicitly required. `bthreads` will set an environment variable called
-`process.env.BTHREADS_WORKER_INLINE` which contains the `[id]` you generated
-previously, allowing you to determine which function to run inside the worker
-thread.
+Statically analyzing the line above, the compiler should replace
+`'./worker.js'` with `'bthreads-worker@[id]'`. When initializing the code,
+`bthreads` should be implicitly required. `bthreads` will set an environment
+variable called `process.env.BTHREADS_WORKER_INLINE` which contains the `[id]`
+you generated previously, allowing you to determine which function to run
+inside the worker thread.
 
 In other words, when the compiler comes across:
 
 ``` js
-const thread = new threads.Thread('./foo.js');
+const thread = new threads.Thread('./worker.js');
 ```
 
-`./foo.js` should be included in the bundled and mapped to an ID (in our case,
-we include it in the bundle with an ID of `1`).
+`./worker.js` should be included in the bundled and mapped to an ID (in our
+case, we include it in the bundle with an ID of `1`).
 
 Our line becomes:
 
