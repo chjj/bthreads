@@ -693,7 +693,7 @@ describe(`Threads (${threads.backend})`, function() {
     const thread = new threads.Thread(async () => {
       const assert = module.require('assert');
       const {parent, workerData} = module.require('../');
-      const encoding = module.require('../lib/internal/encoding');
+      const encoding = module.require('../encoding');
       const blob = encoding.parse(workerData);
 
       assert(blob instanceof Blob);
@@ -718,7 +718,7 @@ describe(`Threads (${threads.backend})`, function() {
     const thread = new threads.Thread(async () => {
       const assert = module.require('assert');
       const {parent, workerData} = module.require('../');
-      const encoding = module.require('../lib/internal/encoding');
+      const encoding = module.require('../encoding');
       const blob = encoding.parse(workerData);
 
       assert(blob instanceof Blob);

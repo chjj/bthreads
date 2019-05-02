@@ -100,7 +100,7 @@ Caveats for the `web_workers` backend:
   Worker API. See https://github.com/whatwg/html/issues/1766 for more info.
 - `SHARE_ENV` does not work and will throw an error if passed.
 - `workerData` is serialized as json instead of using the structured clone
-  algorithm. This limits what can be sent as workerData. This was done to
+  algorithm. This limits what can be sent as `workerData`. This was done to
   reduce code size since serializing structured data is non-trivial.
 - The `stdio`, `stdin`, and `stdout` options will throw an error if passed.
   STDIO streams do not exist in the browser. This is done to reduce code size.
@@ -235,8 +235,8 @@ point.
 
 ### How this works behind the scenes (for plugin implementers)
 
-Statically analyzing the line above, you should replace `'./foo.js'` with
-`'bthreads-worker@[id]'`. When initializing the code, `bthreads` should be
+Statically analyzing the line above, the compiler should replace `'./foo.js'`
+with `'bthreads-worker@[id]'`. When initializing the code, `bthreads` should be
 implicitly required. `bthreads` will set an environment variable called
 `process.env.BTHREADS_WORKER_INLINE` which contains the `[id]` you generated
 previously, allowing you to determine which function to run inside the worker
@@ -492,6 +492,19 @@ nearly identical to the [worker_threads] worker options with some differences:
 - `options.dirname` allows you to set the `__dirname` of an eval'd module.
   This makes `require` more predictable in eval'd modules (note this is _not_
   necessary with the `Thread` and `Pool` objects -- it is done automatically).
+
+#### Worker Data
+
+In the browser, `workerData` is serialized as JSON instead of structured data.
+To force usage of the structured clone algorithm, it's possible to require
+`./lib/encoding` (note that this will increase your code size _greatly_).
+
+``` js
+const encoding = require('bthreads/encoding');
+const thread = new threads.Thread('./worker.js', {
+  workerData: encoding.stringify({ foo: 'bar' })
+});
+```
 
 ## Contribution and License Agreement
 
