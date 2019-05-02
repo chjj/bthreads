@@ -19,7 +19,8 @@ const version = (0
 const PROTO = location.protocol || 'http:';
 const PORT = (location.port >>> 0) || 80;
 const URL = `${PROTO}//localhost:${PORT}/eval.js`;
-const HAS_MODULES = version >= 0x0c0000
+const MODULES_VERSION = 0x0c0000;
+const HAS_MODULES = version >= MODULES_VERSION
   || process.execArgv.indexOf('--experimental-modules') !== -1;
 
 if (!process.browser && basename(cwd) !== 'bthreads')
@@ -245,6 +246,13 @@ describe(`Threads (${threads.backend})`, function() {
     worker.stderr.setEncoding('utf8');
 
     const job = wait(worker);
+
+    // Swallow warning.
+    if (HAS_MODULES && version < MODULES_VERSION
+        && threads.backend === 'worker_threads') {
+      await waitFor(worker.stderr, 'data');
+    }
+
     const msg = await waitFor(worker.stderr, 'data');
 
     assert.strictEqual(msg, 'foobar');
@@ -289,6 +297,13 @@ describe(`Threads (${threads.backend})`, function() {
     worker.stderr.setEncoding('utf8');
 
     const job = wait(worker);
+
+    // Swallow warning.
+    if (HAS_MODULES && version < MODULES_VERSION
+        && threads.backend === 'worker_threads') {
+      await waitFor(worker.stderr, 'data');
+    }
+
     const msg = await waitFor(worker.stderr, 'data');
 
     assert.strictEqual(msg, 'foobar\n');
@@ -1179,38 +1194,6 @@ describe(`Threads (${threads.backend})`, function() {
       assert.strictEqual(await exit(worker), 1);
   });
 
-  it('should eval script (bootstrap=false)', async () => {
-    const thread = new threads.Thread(`
-      importScripts(new URL('/bthreads', '${PROTO}//localhost:${PORT}'));
-      const threads = bthreads;
-      threads.parent.send('foo');
-    `, { eval: true, bootstrap: false });
-
-    assert.strictEqual(await thread.read(), 'foo');
-
-    await thread.close();
-  });
-
-  it.skip('should eval module (bootstrap=false)', async () => {
-    if (!threads.browser)
-      this.skip();
-
-    if (threads.backend === 'polyfill')
-      this.skip();
-
-    // Todo: compile as module somehow for testing.
-    // Note that chromium also doesn't support esm
-    // workers yet.
-    const thread = new threads.Thread(`
-      import threads from 'bthreads';
-      threads.parent.send('foo');
-    `, { eval: true, type: 'module' });
-
-    assert.strictEqual(await thread.read(), 'foo');
-
-    await thread.close();
-  });
-
   it('should eval script (process)', async () => {
     if (threads.backend !== 'child_process')
       this.skip();
@@ -1233,23 +1216,6 @@ describe(`Threads (${threads.backend})`, function() {
     await thread.close();
   });
 
-  it('should eval module (process)', async () => {
-    if (threads.backend !== 'child_process')
-      this.skip();
-
-    if (!HAS_MODULES)
-      this.skip();
-
-    const thread = new threads.Thread(`
-      import threads from 'bthreads';
-      threads.parent.send('foo');
-    `, { eval: true, type: 'module' });
-
-    assert.strictEqual(await thread.read(), 'foo');
-
-    await thread.close();
-  });
-
   it('should execute module (process/threads)', async () => {
     if (threads.browser)
       this.skip();
@@ -1257,7 +1223,7 @@ describe(`Threads (${threads.backend})`, function() {
     if (!HAS_MODULES)
       this.skip();
 
-    const thread = new threads.Thread(vector(19).replace(/\.js$/, '.mjs'));
+    const thread = new threads.Thread('./cases/019.mjs');
 
     assert.strictEqual(await thread.read(), 'foobar');
 
