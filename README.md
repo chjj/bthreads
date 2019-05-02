@@ -98,12 +98,15 @@ Caveats for the `web_workers` backend:
   suddenly terminates, `close` will not be emitted for any remote ports).
   This is because the `close` event is not yet a part of the standard Web
   Worker API. See https://github.com/whatwg/html/issues/1766 for more info.
-- `SharedArrayBuffer` cannot be sent as `workerData`.
-- `Blob` and `File` may not be able to be cloned when sent as `workerData`
-  depending on your `Content-Security-Policy`.
-- `FileList` will emerge on the other side as an `Array` rather than a
-  `FileList` when sent as `workerData`.
 - `SHARE_ENV` does not work and will throw an error if passed.
+- `workerData` is serialized as json instead of using the structured clone
+  algorithm. This limits what can be sent as workerData. This was done to
+  reduce code size since serializing structured data is non-trivial.
+- The `stdio`, `stdin`, and `stdout` options will throw an error if passed.
+  STDIO streams do not exist in the browser. This is done to reduce code size.
+- To make sure bthreads is aware of the `Buffer` object in the browser, you
+  must assign `bthreads.Buffer` like so: `bthreads.Buffer = Buffer;`. Once
+  again, this was done to reduce code size.
 
 Caveats for the `polyfill` backend:
 
@@ -114,12 +117,6 @@ Caveats for the `polyfill` backend:
 - Similarly, worker scripts are also spawned using XHR. This means they are
   restricted by the `connect-src` `Content-Security-Policy` directive
   specifically (instead of perhaps the `worker-src` directive).
-- `SharedArrayBuffer` cannot be sent as `workerData`.
-- `Blob` and `File` may not be able to be cloned when sent as `workerData`
-  depending on your `Content-Security-Policy` (the `blob:` source must be
-  present for the `connect-src` directive).
-- `FileList` will emerge on the other side as an `Array` rather than a
-  `FileList` when sent as `workerData`.
 - All transferred `ArrayBuffer`s behave as if they were `SharedArrayBuffer`s
   (i.e. they're not neutered). Be careful!
 - Uncaught errors will not be caught and emitted as `error` events on worker
@@ -187,7 +184,7 @@ automatically load balance and scale to the number of CPU cores.
 
 ``` js
 if (threads.isMainThread) {
-  const pool = new threads.Pool(threads.source);
+  const pool = new threads.Pool(__filename);
 
   const results = await Promise.all([
     pool.call('job1'), // Runs on thread 1.
@@ -216,46 +213,48 @@ if (threads.isMainThread) {
 
 ## Writing code for node and the browser
 
-It's good to be aware of browserify and how it sets `__filename` and
-`__dirname`.
-
-For example:
-
-``` js
-const worker = new threads.Worker(`${__dirname}/worker.js`);
-```
-
-If your code resides in `/root/project/lib/main.js`, the browserify generated
-path will ultimately be `/lib/worker.js`. Meaning `/root/project/lib/worker.js`
-should exist for node and `http://[host]/lib/worker.js` should exist for the
-browser.
-
-The browser backend also exposes a `browser` flag for this situation.
-
-Example:
+One of the remarkable features of bthreads is that it allows for static
+analysis when bundling. The `threads.Pool` and `threads.Thread` objects
+resolve their `filename` argument as if it was a `require()` from the calling
+file.
 
 ``` js
-const worker = new threads.Worker(threads.browser
-                                ? 'http://.../' + path.basename(file)
-                                : file);
+const thread = new threads.Thread('./foo.js');
 ```
 
-To make self-execution easier, bthreads also exposes a `threads.source`
-property which refers to the main module's filename in node.js and the current
-script URL in the browser.
+The above line will resolve to `${__dirname}/foo.js` in node.js and
+`${window.location}/foo.js` in the browser. In node.js, it is _not_ relative to
+the current working directory! We accomplish this through various forms of
+sorcery.
+
+Why does this matter? Because it allows for browserify and/or webpack to do
+static analysis on your code and ship your code (including workers) as a single
+bundled file! Of course, this would require an extra browserify or webpack
+plugin which adds some more initialization code for choosing the proper entry
+point.
+
+### How this works behind the scenes (for plugin implementers)
+
+Statically analyzing the line above, you should replace `'./foo.js'` with
+`'bthreads-worker@[id]'`. When initializing the code, `bthreads` should be
+implicitly required. `bthreads` will set an environment variable called
+`process.env.BTHREADS_WORKER_INLINE` which contains the `[id]` you generated
+previously, allowing you to determine which function to run inside the worker
+thread.
 
 ## importScripts
 
-In the browser, bthreads exposes a more useful version of `importScripts`.
+In the browser, bthreads exposes a more useful version of `importScripts`
+called `threads.require`.
 
 ``` js
 const threads = require('bthreads');
-const _ = threads.importScripts('https://unpkg.com/underscore/underscore.js');
+const _ = threads.require('https://unpkg.com/underscore/underscore.js');
 ```
 
 This should work for any library exposed as UMD or CommonJS. Note that
-`threads.importScripts` behaves more like `require` in that it caches modules
-by URL. The cache is accessible through `threads.importScripts.cache`.
+`threads.require` behaves more like `require` in that it caches modules
+by URL.
 
 ## More about eval'd browser code
 
@@ -305,21 +304,22 @@ const worker = new threads.Worker(code, { eval: true });
 - Helpers
   - `threads.backend` - A string indicating the current backend
     (`worker_threads`, `child_process`, `web_workers`, or `polyfill`).
-  - `threads.source` - The current main module filename or script URL (`null`
-    if in eval'd thread).
   - `threads.browser` - `true` if a browser backend is being used.
-  - `threads.process` - Reference to the `child_process` backend. This is
-    present to explicitly use the `child_process` backend instead of the
-    `worker_threads` backend.
-  - `threads.exit(code)` - A reference to `process.exit`.
-  - `threads.stdin` - A reference to `process.stdin`.
-  - `threads.stdout` - A reference to `process.stdout`.
-  - `threads.stderr` - A reference to `process.stderr`.
-  - `threads.console` - A reference to `global.console`.
-  - `threads.importScripts(url)` - `importScripts()` wrapper (browser+worker
+  - `threads.location` - The current module URL (cross-platform
+    `import.meta.url`).
+  - `threads.filename` - The current module filename (cross-platform
+    `__filename`).
+  - `threads.dirname` - The current module dirname (cross-platform
+    `__dirname`).
+  - `threads.require(location)` - `importScripts()` wrapper (browser+worker
     only).
+  - `threads.resolve(location)` - Resolve a URL or path to a filename. This is
+    what `threads.require` calls internally.
+  - `threads.exit(code)` - A reference to `process.exit`.
   - `threads.cores` - Number of CPU cores available.
 - Options
+  - `threads.Buffer` - In the browser, this must be set to the `Buffer` object
+    in order for bthreads to be aware of buffers.
   - `threads.bufferify` - A boolean indicating whether to cast Uint8Arrays
      to Buffer objects after receiving. Only affects the high-level API. This
      option is on by default.
@@ -458,11 +458,14 @@ nearly identical to the [worker_threads] worker options with some differences:
   `options.type` is automatically set to `module` for consistency with node.js.
 - `options.bootstrap` is a valid option in the browser when used in combination
   with `options.eval`. Its value should be the URL of a compiled [bundle] file.
-  For security, it's recommended to serve your own bootstrap file.
+  For security, it's recommended to serve your own bootstrap file. This can be
+  set to `false` to do a _raw_ eval (you must inline your own initialization
+  code, presumably by using `importScripts`).
 - The `Pool` class accepts `size` option. This allows you to manually set the
   pool size instead of determining it by the number of CPU cores.
 - `options.dirname` allows you to set the `__dirname` of an eval'd module.
-  This makes `require` more predictable in eval'd modules (node only).
+  This makes `require` more predictable in eval'd modules (not this is _not_
+  necessary with the `Thread` and `Pool` objects -- it is done automatically).
 
 ## Contribution and License Agreement
 
