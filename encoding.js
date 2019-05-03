@@ -4,4 +4,6 @@
  * https://github.com/bcoin-org/bthreads
  */
 
+'use strict';
+
 module.exports = require('./lib/encoding');
