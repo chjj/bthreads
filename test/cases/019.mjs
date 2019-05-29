@@ -1,7 +1,7 @@
 'use strict';
 
 import assert from 'assert';
-import threads from '../../';
+import threads from '../../lib/bthreads.js';
 
 assert(!threads.isMainThread);
 
