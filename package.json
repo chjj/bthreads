@@ -8,10 +8,10 @@
     "worker_threads"
   ],
   "license": "MIT",
-  "repository": "git://github.com/bcoin-org/bthreads.git",
-  "homepage": "https://github.com/bcoin-org/bthreads",
+  "repository": "git://github.com/chjj/bthreads.git",
+  "homepage": "https://github.com/chjj/bthreads",
   "bugs": {
-    "url": "https://github.com/bcoin-org/bthreads/issues"
+    "url": "https://github.com/chjj/bthreads/issues"
   },
   "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
   "main": "./lib/bthreads",
