@@ -194,18 +194,20 @@ if (threads.isMainThread) {
 
   console.log(results);
 } else {
+  const {parent} = threads;
+
   Buffer.poolSize = 1; // Make buffers easily transferrable.
 
-  pool.hook('job1', async () => {
+  parent.hook('job1', async () => {
     const buf = Buffer.from('job1 result');
     return [buf, [buf.buffer]]; // Transfer the array buffer.
   });
 
-  pool.hook('job2', async () => {
+  parent.hook('job2', async () => {
     return 'job2 result';
   });
 
-  pool.hook('job3', async () => {
+  parent.hook('job3', async () => {
     return 'job3 result';
   });
 }
@@ -403,7 +405,7 @@ const worker = new threads.Worker(code, { eval: true });
     but also listen for errors and reject the promise if any occur (in other
     words, a better `async` version of `Thread#terminate`).
   - `Thread#wait()` (async) - Wait for thread to exit, but do not invoke
-    `close()`.
+    `close()`. Also listen for errors and reject the promise if any occur.
 - Events
   - `Thread@online()` - Emitted once thread is online.
   - `Thread@exit(code)` - Emitted on exit.
@@ -415,9 +417,8 @@ const worker = new threads.Worker(code, { eval: true });
 - Methods
   - `Port#start()` - Open and bind port (usually automatic).
   - `Port#close()` (async) - Close the port and wait for `close` event, but
-  - `Port#wait()` (async) - Wait for thread to exit, but do not invoke
-    `close()`.
-    also listen for errors and reject the promise if any occur.
+  - `Port#wait()` (async) - Wait for port to exit, but do not invoke `close()`.
+    Also listen for errors and reject the promise if any occur.
 - Events
   - `Port@close()` - Emitted on port close.
 
