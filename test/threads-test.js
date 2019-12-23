@@ -1133,8 +1133,8 @@ describe(`Threads (${threads.backend})`, function() {
     const worker = new threads.Worker(`(${func})();`, {
       eval: true,
       resourceLimits: {
-        maxOldSpaceSizeMb: 1,
-        maxSemiSpaceSizeMb: 1
+        maxYoungGenerationSizeMb: 1,
+        maxOldGenerationSizeMb: 1
       }
     });
 
