@@ -34,7 +34,6 @@
     "./lib/internal/is-proxy": "./lib/internal/is-proxy-browser.js",
     "./lib/internal/os": "./lib/internal/os-browser.js",
     "./process": "./lib/browser/index.js",
-    "./stable": "./lib/browser/index.js",
     "./threads": "./lib/browser/index.js"
   }
 }
