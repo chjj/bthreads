@@ -60,10 +60,8 @@ there are also more explicit entry points:
   regardless of node version.
 - `require('bthreads/threads')` - Always the `worker_threads` backend,
   regardless of node version.
-- `require('bthreads/stable')` - Points to the `worker_threads` backend once it
-  is considered "stable", `child_process` otherwise. The current "stable" node
-  version for `worker_threads` is considered to be 11.11.0. May change in the
-  future.
+- `require('bthreads/stable')` - Points to the `worker_threads` if the node
+  version is `12.11.0` or higher, `child_process` otherwise.
 
 ## Caveats
 
